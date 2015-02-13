@@ -28,7 +28,7 @@ namespace Stellariview
 
 		double loadStartGameTime = 0;
 
-		public enum TextureState { Unloaded, Loading, Loaded }
+		public enum TextureState { Unloaded, Loading, Loaded, Error }
 
 		public TextureState state = TextureState.Unloaded;
 
@@ -52,7 +52,7 @@ namespace Stellariview
 
 		public void Load()
 		{
-			if (state == TextureState.Loaded) return;
+			if (state == TextureState.Loaded || state == TextureState.Error) return;
 			if (state != TextureState.Loading && Core.frameTime != null) loadStartGameTime = Core.frameTime.TotalGameTime.TotalSeconds;
 			state = TextureState.Loading;
 
@@ -72,6 +72,14 @@ namespace Stellariview
 		{
 			if (DEBUG) loadStartTime = DateTime.Now;
 			Texture2D res = null;
+			if (!sourcePath.Exists)
+			{
+				state = TextureState.Error;
+
+				allLoaded.Add(this);
+				loadQueue.Remove(this);
+				return;
+			}
 			sourcePath.Open((FileStream fs) =>
 			{
 				try
@@ -143,12 +151,7 @@ namespace Stellariview
 			{
 				double time = Core.frameTime.TotalGameTime.TotalSeconds - loadStartGameTime;
 				float rotation = (float)(time * Math.PI * 1.0);
-				//float step = (float)(Math.PI * 0.05);
-
-				/*sb.Draw(Core.txPixel, position, null, new Color(drawColor.ToVector4() * 0.25f), rotation - step * 2, Vector2.One * 0.5f, new Vector2(2f, 80f), SpriteEffects.None, 0f);
-				sb.Draw(Core.txPixel, position, null, new Color(drawColor.ToVector4() * 0.5f), rotation - step, Vector2.One * 0.5f, new Vector2(2f, 80f), SpriteEffects.None, 0f);
-				sb.Draw(Core.txPixel, position, null, drawColor, rotation, Vector2.One * 0.5f, new Vector2(2f, 80f), SpriteEffects.None, 0f);*/
-
+				
 				const int numDots = 8;
 				const float rotStep = (float)(Math.PI * 2 / numDots);
 
@@ -158,7 +161,16 @@ namespace Stellariview
 				{
 					sb.Draw(Core.txPixel, position + new Vector2((float)Math.Cos(rotation - rotStep * i), (float)Math.Sin(rotation - rotStep * i)) * 20f, null, new Color(drawColorVec * (1f - i * (1f/8f))), (float)(Math.PI / 4), Vector2.One * 0.5f, new Vector2(5f, 5f), SpriteEffects.None, 0f);
 				}
+			}
 
+			else if (state == TextureState.Error)
+			{
+				Vector4 drawColorVec = drawColor.ToVector4();
+				Vector4 colorVec = new Vector4(1f, 0f, 0f, 0f) * drawColorVec;
+				Color dcolor = new Color(colorVec);
+
+				sb.Draw(Core.txPixel, position, null, dcolor, (float)Math.PI * 0.25f, Vector2.One * 0.5f, new Vector2(4f, 64f), SpriteEffects.None, 0f);
+				sb.Draw(Core.txPixel, position, null, dcolor, (float)Math.PI * -0.25f, Vector2.One * 0.5f, new Vector2(4f, 64f), SpriteEffects.None, 0f);
 			}
 		}
 
