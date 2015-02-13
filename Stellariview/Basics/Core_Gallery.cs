@@ -39,6 +39,8 @@ namespace Stellariview
 		}
 		TextureHolder NextEntry { get { return entriesCurrent[WrapIndex(currentEntryId + 1)]; } }
 		TextureHolder PrevEntry { get { return entriesCurrent[WrapIndex(currentEntryId - 1)]; } }
+		TextureHolder NextEntry2 { get { return entriesCurrent[WrapIndex(currentEntryId + 2)]; } }
+		TextureHolder PrevEntry2 { get { return entriesCurrent[WrapIndex(currentEntryId - 2)]; } }
 
 		int fadeLevel = 3;
 		float[] fadeLevels = { 1f, 0.75f, 0.5f, 0.25f };
@@ -131,7 +133,9 @@ namespace Stellariview
 				return;
 			}
 
-			Color fadeColor = new Color(new Vector4(fadeLevels[fadeLevel]));
+			float curFadeLevel = fadeLevels[fadeLevel];
+			Color fadeColor = new Color(new Vector4(curFadeLevel));
+			Color fadeColor2 = new Color(new Vector4(curFadeLevel * curFadeLevel));
 
 			Vector2 screenSize = new Vector2(Window.ClientBounds.Width, Window.ClientBounds.Height);
 			Vector2 screenCenter = screenSize * 0.5f;
@@ -139,10 +143,13 @@ namespace Stellariview
 			spriteBatch.Begin();//SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.AnisotropicClamp, DepthStencilState.Default, RasterizerState.CullNone);
 			//spriteBatch.Draw(imgCurrent, Vector2.Zero, Color.White);
 
-			CurrentEntry.Draw(spriteBatch, screenCenter, screenSize);
+			PrevEntry2.Draw(spriteBatch, screenCenter - new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + PrevEntry.GetSize(screenSize).X + PrevEntry2.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor2);
+			NextEntry2.Draw(spriteBatch, screenCenter + new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + NextEntry.GetSize(screenSize).X + NextEntry2.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor2);
 
 			PrevEntry.Draw(spriteBatch, screenCenter - new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + PrevEntry.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor);
 			NextEntry.Draw(spriteBatch, screenCenter + new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + NextEntry.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor);
+
+			CurrentEntry.Draw(spriteBatch, screenCenter, screenSize);
 
 			spriteBatch.End();
 		}
