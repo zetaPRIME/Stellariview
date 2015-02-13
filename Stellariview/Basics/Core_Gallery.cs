@@ -107,16 +107,18 @@ namespace Stellariview
 				if (Input.KeyPressed(Keys.S)) Shuffle();
 				if (Input.KeyPressed(Keys.F)) fadeLevel = (fadeLevel + 1) % fadeLevels.Length;
 
-				if (Input.KeyPressed(Keys.Left)) currentEntryId = WrapIndex(currentEntryId - 1);
-				if (Input.KeyPressed(Keys.Right)) currentEntryId = WrapIndex(currentEntryId + 1);
+				if (Input.KeyPressed(Keys.Left) || Input.KeyPressed(Keys.Z)) currentEntryId = WrapIndex(currentEntryId - 1);
+				if (Input.KeyPressed(Keys.Right) || Input.KeyPressed(Keys.X)) currentEntryId = WrapIndex(currentEntryId + 1);
 			}
 			#endregion
 
+			TextureHolder.pauseLoad = true;
 			entriesCurrent[WrapIndex(currentEntryId - 2)].Load();
 			entriesCurrent[WrapIndex(currentEntryId + 2)].Load();
 			entriesCurrent[WrapIndex(currentEntryId - 1)].Load();
 			entriesCurrent[WrapIndex(currentEntryId + 1)].Load();
 			CurrentEntry.Load();
+			TextureHolder.pauseLoad = false;
 
 			string title = "Stellariview - " + CurrentEntry.sourcePath.FileName;
 			if (entriesCurrent != entriesOriginal) title += " (shuffle)";

@@ -35,6 +35,8 @@ namespace Stellariview
 		public Texture2D texture;
 		public Path sourcePath;
 
+		public bool needsConverted = false;
+
 		public TextureHolder(Path path, bool loadImmediate)
 		{
 			sourcePath = path;
@@ -75,7 +77,7 @@ namespace Stellariview
 				try
 				{
 					res = Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, fs);
-					res = ConvertToPreMultipliedAlphaGPU(res);
+					//res = ConvertToPreMultipliedAlphaGPU(res);
 				}
 				catch (Exception e)
 				{
@@ -86,7 +88,8 @@ namespace Stellariview
 						using (MemoryStream ms = new MemoryStream())
 						{
 							bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-							lock (Core.gfxLock) res = Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, ms);
+							res = Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, ms);
+							//res = ConvertToPreMultipliedAlphaGPU(res);
 						}
 					}
 				}
@@ -96,6 +99,8 @@ namespace Stellariview
 				texture = res;
 				if (DEBUG) Console.WriteLine("Loading of " + sourcePath.FileName + " took " + (DateTime.Now - loadStartTime).TotalSeconds + "s; dimensions " + res.Width + "x" + res.Height);
 				state = TextureState.Loaded;
+
+				needsConverted = true;
 
 				allLoaded.Add(this);
 				loadQueue.Remove(this);
@@ -157,7 +162,7 @@ namespace Stellariview
 			}
 		}
 
-		Texture2D ConvertToPreMultipliedAlphaGPU(Texture2D texture)
+		static Texture2D ConvertToPreMultipliedAlphaGPU(Texture2D texture)
 		{
 			// code borrowed from http://jakepoz.com/jake_poznanski__speeding_up_xna.html
 
@@ -221,9 +226,22 @@ namespace Stellariview
 		#region Static things
 		static Thread loadThread = null;
 
+		public static bool pauseLoad = false;
 		public static List<TextureHolder> loadQueue = new List<TextureHolder>();
 		public static List<TextureHolder> allLoaded = new List<TextureHolder>();
 		const int MAX_LOADED = 16;
+
+		public static void ProcessConvertQueue()
+		{
+			foreach (TextureHolder tex in allLoaded)
+			{
+				if (tex.needsConverted)
+				{
+					tex.texture = ConvertToPreMultipliedAlphaGPU(tex.texture);
+					tex.needsConverted = false;
+				}
+			}
+		}
 
 		public static void StartLoadThread()
 		{
@@ -235,7 +253,7 @@ namespace Stellariview
 		public static void LoadThread()
 		{
 			while (true) {
-				if (loadQueue.Count == 0) { Thread.Sleep(0); continue; }
+				if (pauseLoad || loadQueue.Count == 0) { Thread.Sleep(0); continue; }
 
 				loadQueue[0].LoadFromThread();
 				CleanUp();

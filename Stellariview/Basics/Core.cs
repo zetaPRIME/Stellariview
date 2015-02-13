@@ -112,6 +112,8 @@ namespace Stellariview
 			frameTime = gameTime;
 			lock (gfxLock)
 			{
+				TextureHolder.ProcessConvertQueue();
+
 				spriteBatch.GraphicsDevice.SetRenderTarget(null);
 
 				AppDraw(gameTime);
@@ -155,6 +157,8 @@ namespace Stellariview
 				graphics.PreferredBackBufferHeight = dispMode.Height;
 				graphics.ToggleFullScreen();
 				graphics.ApplyChanges();
+
+				IsMouseVisible = false;
 			}
 			else
 			{
@@ -162,6 +166,8 @@ namespace Stellariview
 				graphics.PreferredBackBufferHeight = boundsBeforeFullscreen.Height;
 				graphics.ToggleFullScreen();
 				graphics.ApplyChanges();
+
+				IsMouseVisible = true;
 
 				assertWindowSize = true;
 				//SetWindowSize(boundsBeforeFullscreen.Width, boundsBeforeFullscreen.Height);
