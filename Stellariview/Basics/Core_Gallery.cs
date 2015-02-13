@@ -81,7 +81,10 @@ namespace Stellariview
 			lastFrameEntryId = currentEntryId;
 
 			#region Processing key input
-			if (Input.KeyHeld(Keys.LeftAlt) || Input.KeyHeld(Keys.RightAlt))
+			bool alt = (Input.KeyHeld(Keys.LeftAlt) || Input.KeyHeld(Keys.RightAlt));
+			bool ctrl = (Input.KeyHeld(Keys.LeftControl) || Input.KeyHeld(Keys.RightControl));
+
+			if (alt)
 			{
 				if (Input.KeyPressed(Keys.Enter))
 				{
@@ -96,6 +99,8 @@ namespace Stellariview
 					if (graphics.IsFullScreen) ToggleFullscreen();
 					else Exit();
 				}
+
+				if (Input.KeyPressed(Keys.F11)) ToggleFullscreen();
 
 				if (Input.KeyPressed(Keys.S)) Shuffle();
 				if (Input.KeyPressed(Keys.F)) fadeLevel = (fadeLevel + 1) % fadeLevels.Length;
