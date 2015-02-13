@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Reflection;
+using System.Threading;
 
 using Fluent.IO;
 using Ionic.Zip;
@@ -26,6 +27,7 @@ namespace Stellariview
 
 		public static object gfxLock = new object();
 		public static GameTime frameTime;
+		public static float frameTimeTotal;
 
 		public static SpriteFont fontDebug;
 		public static Texture2D txPixel;
@@ -54,6 +56,7 @@ namespace Stellariview
 
 			// making sure of a few things
 			IsFixedTimeStep = false;
+			TargetElapsedTime = TimeSpan.FromSeconds(1f / 60f);
 
 			graphics.PreferredBackBufferWidth = 854;
 			graphics.PreferredBackBufferHeight = 480;
@@ -63,6 +66,8 @@ namespace Stellariview
 
 			this.IsMouseVisible = true;
 			Window.AllowUserResizing = true;
+
+			Thread.CurrentThread.Priority = ThreadPriority.AboveNormal; // prioritize UI thread over load thread; should not impact load thread much as UI is comparatively light
 
 			base.Initialize();
 		}
@@ -109,7 +114,13 @@ namespace Stellariview
 
 		protected override void Draw(GameTime gameTime)
 		{
+			float prevFrameTime = frameTimeTotal;
+			float thisFrameTime = (float)gameTime.TotalGameTime.TotalSeconds;
+			if (thisFrameTime - prevFrameTime < 1f / 60f) return; // don't need more than 60fps
+
 			frameTime = gameTime;
+			frameTimeTotal = thisFrameTime;
+
 			lock (gfxLock)
 			{
 				TextureHolder.ProcessConvertQueue();

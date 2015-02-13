@@ -96,6 +96,7 @@
     <Compile Include="Stellariview\Basics\Core.cs" />
     <Compile Include="Stellariview\Basics\Core_Gallery.cs" />
     <Compile Include="Stellariview\Basics\Program.cs" />
+    <Compile Include="Stellariview\Data Types\AnimatedTexture.cs" />
     <Compile Include="Stellariview\Data Types\TextureHolder.cs" />
     <Compile Include="Stellariview\Helpers\NumericComparer.cs" />
     <Compile Include="Stellariview\Input\Input.cs" />

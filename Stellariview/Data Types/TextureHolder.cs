@@ -33,6 +33,7 @@ namespace Stellariview
 		public TextureState state = TextureState.Unloaded;
 
 		public Texture2D texture;
+		public AnimatedTexture animation;
 		public Path sourcePath;
 
 		public bool needsConverted = false;
@@ -62,6 +63,7 @@ namespace Stellariview
 
 		public void Unload() {
 			texture = null;
+			animation = null;
 			state = TextureState.Unloaded;
 
 			if (loadQueue.Contains(this)) loadQueue.Remove(this);
@@ -72,6 +74,7 @@ namespace Stellariview
 		{
 			if (DEBUG) loadStartTime = DateTime.Now;
 			Texture2D res = null;
+			AnimatedTexture resAnim = null;
 			if (!sourcePath.Exists)
 			{
 				state = TextureState.Error;
@@ -82,22 +85,34 @@ namespace Stellariview
 			}
 			sourcePath.Open((FileStream fs) =>
 			{
-				try
+				if (sourcePath.Extension == ".gif")
 				{
-					res = Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, fs);
-					//res = ConvertToPreMultipliedAlphaGPU(res);
+					Image img = Image.FromStream(fs);
+					resAnim = new AnimatedTexture(img);
+
+					res = resAnim.frames[0].texture;
+
+					if (resAnim.frames.Count == 1) resAnim = null; // discard
 				}
-				catch (Exception e)
+				else
 				{
-					if (e.Message.Contains("indexed"))
+					try
 					{
-						Image img = Image.FromStream(fs);
-						Bitmap bmp = new Bitmap(img);
-						using (MemoryStream ms = new MemoryStream())
+						res = Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, fs);
+						//res = ConvertToPreMultipliedAlphaGPU(res);
+					}
+					catch (Exception e)
+					{
+						if (e.Message.Contains("indexed"))
 						{
-							bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-							res = Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, ms);
-							//res = ConvertToPreMultipliedAlphaGPU(res);
+							Image img = Image.FromStream(fs);
+							Bitmap bmp = new Bitmap(img);
+							using (MemoryStream ms = new MemoryStream())
+							{
+								bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+								res = Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, ms);
+								//res = ConvertToPreMultipliedAlphaGPU(res);
+							}
 						}
 					}
 				}
@@ -105,6 +120,7 @@ namespace Stellariview
 			if (res != null && state == TextureState.Loading)
 			{
 				texture = res;
+				animation = resAnim;
 				if (DEBUG) Console.WriteLine("Loading of " + sourcePath.FileName + " took " + (DateTime.Now - loadStartTime).TotalSeconds + "s; dimensions " + res.Width + "x" + res.Height);
 				state = TextureState.Loaded;
 
@@ -144,7 +160,14 @@ namespace Stellariview
 				float scale = Math.Min(sizeConstraints.X / imgSize.X, sizeConstraints.Y / imgSize.Y);
 				scale = Math.Min(scale, 1f);
 
-				sb.Draw(texture, position, null, drawColor, 0f, imgSize / 2f, scale, SpriteEffects.None, 0f);
+				if (animation != null)
+				{
+					animation.Draw(sb, position, null, drawColor, 0f, imgSize / 2f, scale, SpriteEffects.None, 0f);
+				}
+				else
+				{
+					sb.Draw(texture, position, null, drawColor, 0f, imgSize / 2f, scale, SpriteEffects.None, 0f);
+				}
 			}
 
 			else if (state == TextureState.Loading)
@@ -245,7 +268,9 @@ namespace Stellariview
 
 		public static void ProcessConvertQueue()
 		{
-			foreach (TextureHolder tex in allLoaded)
+			List<TextureHolder> queue;
+			lock (allLoaded) queue = new List<TextureHolder>(allLoaded);
+			foreach (TextureHolder tex in queue)
 			{
 				if (tex.needsConverted)
 				{
@@ -259,13 +284,14 @@ namespace Stellariview
 		{
 			loadThread = new Thread(LoadThread);
 			loadThread.IsBackground = true;
+			loadThread.Priority = ThreadPriority.BelowNormal;
 			loadThread.Start();
 		}
 
 		public static void LoadThread()
 		{
 			while (true) {
-				if (pauseLoad || loadQueue.Count == 0) { Thread.Sleep(0); continue; }
+				if (pauseLoad || loadQueue.Count == 0) { Thread.Sleep(100); continue; }
 
 				loadQueue[0].LoadFromThread();
 				CleanUp();

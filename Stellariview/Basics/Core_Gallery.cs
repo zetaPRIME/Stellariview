@@ -45,6 +45,8 @@ namespace Stellariview
 		int fadeLevel = 3;
 		float[] fadeLevels = { 1f, 0.75f, 0.5f, 0.25f };
 
+		bool dirty = true;
+
 		void AppInit()
 		{
 			// build list
@@ -107,22 +109,27 @@ namespace Stellariview
 				if (Input.KeyPressed(Keys.S)) Shuffle();
 				if (Input.KeyPressed(Keys.F)) fadeLevel = (fadeLevel + 1) % fadeLevels.Length;
 
-				if (Input.KeyPressed(Keys.Left) || Input.KeyPressed(Keys.Z)) currentEntryId = WrapIndex(currentEntryId - 1);
-				if (Input.KeyPressed(Keys.Right) || Input.KeyPressed(Keys.X)) currentEntryId = WrapIndex(currentEntryId + 1);
+				if (Input.KeyPressed(Keys.Left) || Input.KeyPressed(Keys.Z)) { currentEntryId = WrapIndex(currentEntryId - 1); dirty = true; }
+				if (Input.KeyPressed(Keys.Right) || Input.KeyPressed(Keys.X)) { currentEntryId = WrapIndex(currentEntryId + 1); dirty = true; }
 			}
 			#endregion
 
-			TextureHolder.pauseLoad = true;
-			entriesCurrent[WrapIndex(currentEntryId - 2)].Load();
-			entriesCurrent[WrapIndex(currentEntryId + 2)].Load();
-			entriesCurrent[WrapIndex(currentEntryId - 1)].Load();
-			entriesCurrent[WrapIndex(currentEntryId + 1)].Load();
-			CurrentEntry.Load();
-			TextureHolder.pauseLoad = false;
+			if (dirty)
+			{
+				TextureHolder.pauseLoad = true;
+				entriesCurrent[WrapIndex(currentEntryId - 2)].Load();
+				entriesCurrent[WrapIndex(currentEntryId + 2)].Load();
+				entriesCurrent[WrapIndex(currentEntryId - 1)].Load();
+				entriesCurrent[WrapIndex(currentEntryId + 1)].Load();
+				CurrentEntry.Load();
+				TextureHolder.pauseLoad = false;
 
-			string title = "Stellariview - " + CurrentEntry.sourcePath.FileName;
-			if (entriesCurrent != entriesOriginal) title += " (shuffle)";
-			Window.Title = title;
+				string title = "Stellariview - " + CurrentEntry.sourcePath.FileName;
+				if (entriesCurrent != entriesOriginal) title += " (shuffle)";
+				Window.Title = title;
+
+				dirty = false;
+			}
 		}
 
 		void AppDraw(GameTime gameTime)
@@ -181,6 +188,8 @@ namespace Stellariview
 			}
 
 			CurrentEntry = current;
+
+			dirty = true;
 		}
 
 		/*TextureHolder LoadImage(string name)
