@@ -46,7 +46,8 @@ namespace Stellariview
 		void AppInit()
 		{
 			// build list
-			directory = startingPath.Up();
+			if (startingPath.IsDirectory) directory = startingPath;
+			else directory = startingPath.Up();
 
 			List<String> names = new List<string>();
 			foreach (Path file in directory.Files(p => supportedTypes.Contains(p.Extension), false)) names.Add(file.FileName);
@@ -57,12 +58,22 @@ namespace Stellariview
 			entriesCurrent = entriesOriginal;
 
 			CurrentEntry = entriesCurrent.Find(p => (p.sourcePath == startingPath));
+			if (currentEntryId < 0) currentEntryId = 0; // no negative numbers >:(
 
 			TextureHolder.StartLoadThread();
 		}
 
 		void AppUpdate(GameTime gameTime)
 		{
+			if (entriesCurrent.Count == 0)
+			{
+				Window.Title = "Stellariview - No images present!";
+
+				if (Input.KeyPressed(Keys.Escape)) Exit();
+
+				return;
+			}
+
 			if (lastFrameEntryId != currentEntryId)
 			{
 				//entriesCurrent[lastFrameEntryId].Unload();
@@ -100,12 +111,20 @@ namespace Stellariview
 			entriesCurrent[WrapIndex(currentEntryId + 1)].Load();
 			CurrentEntry.Load();
 
-			Window.Title = "Stellariview - " + CurrentEntry.sourcePath.FileName;
+			string title = "Stellariview - " + CurrentEntry.sourcePath.FileName;
+			if (entriesCurrent != entriesOriginal) title += " (shuffle)";
+			Window.Title = title;
 		}
 
 		void AppDraw(GameTime gameTime)
 		{
 			spriteBatch.GraphicsDevice.Clear(Color.Black);
+
+			if (entriesCurrent.Count == 0)
+			{
+				spriteBatch.GraphicsDevice.Clear(new Color(0.25f, 0f, 0f));
+				return;
+			}
 
 			Color fadeColor = new Color(new Vector4(fadeLevels[fadeLevel]));
 
@@ -126,8 +145,8 @@ namespace Stellariview
 		void WrapIndex() { currentEntryId = WrapIndex(currentEntryId); }
 		int WrapIndex(int index)
 		{
-			if (index < 0) index += entriesCurrent.Count;
-			else if (index >= entriesCurrent.Count) index -= entriesCurrent.Count;
+			while (index < 0) index += entriesCurrent.Count;
+			while (index >= entriesCurrent.Count) index -= entriesCurrent.Count;
 			return index;
 		}
 

@@ -55,7 +55,7 @@ namespace Stellariview
 			// making sure of a few things
 			IsFixedTimeStep = false;
 
-			graphics.PreferredBackBufferWidth = 640;
+			graphics.PreferredBackBufferWidth = 854;
 			graphics.PreferredBackBufferHeight = 480;
 			graphics.IsFullScreen = false;
 

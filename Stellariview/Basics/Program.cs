@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Reflection;
 
 using System.Diagnostics;
 
@@ -28,9 +29,7 @@ namespace Stellariview
 		static void ProcessArguments(string[] args)
 		{
 			if (args.Length > 0) Core.startingPath = new Path(args[0]);
-			// debug: point to a place
-			//else Core.startingPath = new Path("D:\\~cyr\\data\\new\\XFAV\\set\\!! YES !!\\qq\\8faf711072c98df42c227636ef65c6c2.jpg");
-			else Core.startingPath = new Path("D:\\~cyr\\data\\new\\XFAV\\set\\!! YES !!\\qq\\1018421_FenFen_mbf_ych_1_lo.png");
+			else Core.startingPath = new Path(Assembly.GetCallingAssembly().Location).Up(); // containing folder
 		}
 	}
 }
