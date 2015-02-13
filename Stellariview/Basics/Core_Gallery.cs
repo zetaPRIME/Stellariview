@@ -40,6 +40,9 @@ namespace Stellariview
 		TextureHolder NextEntry { get { return entriesCurrent[WrapIndex(currentEntryId + 1)]; } }
 		TextureHolder PrevEntry { get { return entriesCurrent[WrapIndex(currentEntryId - 1)]; } }
 
+		int fadeLevel = 3;
+		float[] fadeLevels = { 1f, 0.75f, 0.5f, 0.25f };
+
 		void AppInit()
 		{
 			// build list
@@ -84,6 +87,7 @@ namespace Stellariview
 				}
 
 				if (Input.KeyPressed(Keys.S)) Shuffle();
+				if (Input.KeyPressed(Keys.F)) fadeLevel = (fadeLevel + 1) % fadeLevels.Length;
 
 				if (Input.KeyPressed(Keys.Left)) currentEntryId = WrapIndex(currentEntryId - 1);
 				if (Input.KeyPressed(Keys.Right)) currentEntryId = WrapIndex(currentEntryId + 1);
@@ -95,13 +99,15 @@ namespace Stellariview
 			entriesCurrent[WrapIndex(currentEntryId - 1)].Load();
 			entriesCurrent[WrapIndex(currentEntryId + 1)].Load();
 			CurrentEntry.Load();
+
+			Window.Title = "Stellariview - " + CurrentEntry.sourcePath.FileName;
 		}
 
 		void AppDraw(GameTime gameTime)
 		{
 			spriteBatch.GraphicsDevice.Clear(Color.Black);
 
-			Color fadeColor = new Color(new Vector4(0.25f));
+			Color fadeColor = new Color(new Vector4(fadeLevels[fadeLevel]));
 
 			Vector2 screenSize = new Vector2(Window.ClientBounds.Width, Window.ClientBounds.Height);
 			Vector2 screenCenter = screenSize * 0.5f;
