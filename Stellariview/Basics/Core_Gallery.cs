@@ -45,6 +45,9 @@ namespace Stellariview
 		int fadeLevel = 3;
 		float[] fadeLevels = { 1f, 0.75f, 0.5f, 0.25f };
 
+		float switchScrollPos = 0f;
+		float switchScrollScale = 0f;
+
 		bool dirty = true;
 
 		void AppInit()
@@ -109,8 +112,8 @@ namespace Stellariview
 				if (Input.KeyPressed(Keys.S)) Shuffle();
 				if (Input.KeyPressed(Keys.F)) fadeLevel = (fadeLevel + 1) % fadeLevels.Length;
 
-				if (Input.KeyPressed(Keys.Left) || Input.KeyPressed(Keys.Z)) { currentEntryId = WrapIndex(currentEntryId - 1); dirty = true; }
-				if (Input.KeyPressed(Keys.Right) || Input.KeyPressed(Keys.X)) { currentEntryId = WrapIndex(currentEntryId + 1); dirty = true; }
+				if (Input.KeyPressed(Keys.Left) || Input.KeyPressed(Keys.Z)) { GoPrev(); }
+				if (Input.KeyPressed(Keys.Right) || Input.KeyPressed(Keys.X)) { GoNext(); }
 			}
 			#endregion
 
@@ -149,18 +152,62 @@ namespace Stellariview
 			Vector2 screenSize = new Vector2(Window.ClientBounds.Width, Window.ClientBounds.Height);
 			Vector2 screenCenter = screenSize * 0.5f;
 
+			const float PER_SECOND = 0.64f;
+			const float PER_SECOND_INVERT = 1 - PER_SECOND;
+			float proportion = PER_SECOND + (PER_SECOND_INVERT * deltaTimeDraw);
+			proportion = Math.Max(0f, Math.Min(proportion, 1f));
+			switchScrollScale *= proportion;
+
+			if (Math.Abs(switchScrollScale) < 0.005f) switchScrollScale = 0;
+
+			Vector2 drawOrigin = screenCenter + new Vector2(switchScrollPos * switchScrollScale, 0);
+
 			spriteBatch.Begin();//SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.AnisotropicClamp, DepthStencilState.Default, RasterizerState.CullNone);
 			//spriteBatch.Draw(imgCurrent, Vector2.Zero, Color.White);
 
-			PrevEntry2.Draw(spriteBatch, screenCenter - new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + PrevEntry.GetSize(screenSize).X + PrevEntry2.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor2);
-			NextEntry2.Draw(spriteBatch, screenCenter + new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + NextEntry.GetSize(screenSize).X + NextEntry2.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor2);
+			PrevEntry2.Draw(spriteBatch, drawOrigin - new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + PrevEntry.GetSize(screenSize).X + PrevEntry2.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor2);
+			NextEntry2.Draw(spriteBatch, drawOrigin + new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + NextEntry.GetSize(screenSize).X + NextEntry2.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor2);
 
-			PrevEntry.Draw(spriteBatch, screenCenter - new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + PrevEntry.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor);
-			NextEntry.Draw(spriteBatch, screenCenter + new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + NextEntry.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor);
+			PrevEntry.Draw(spriteBatch, drawOrigin - new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + PrevEntry.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor);
+			NextEntry.Draw(spriteBatch, drawOrigin + new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + NextEntry.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor);
 
-			CurrentEntry.Draw(spriteBatch, screenCenter, screenSize);
+			CurrentEntry.Draw(spriteBatch, drawOrigin, screenSize);
 
 			spriteBatch.End();
+		}
+
+		void GoPrev()
+		{
+			Vector2 screenSize = new Vector2(Window.ClientBounds.Width, Window.ClientBounds.Height);
+
+			float curScrollPos = switchScrollPos * switchScrollScale;
+			switchScrollPos = curScrollPos - (CurrentEntry.GetSize(screenSize).X * 0.5f + PrevEntry.GetSize(screenSize).X * 0.5f);
+			SwitchScroll(screenSize);
+
+			currentEntryId = WrapIndex(currentEntryId - 1);
+			dirty = true;
+		}
+		void GoNext()
+		{
+			Vector2 screenSize = new Vector2(Window.ClientBounds.Width, Window.ClientBounds.Height);
+
+			float curScrollPos = switchScrollPos * switchScrollScale;
+			switchScrollPos = curScrollPos + (CurrentEntry.GetSize(screenSize).X * 0.5f + NextEntry.GetSize(screenSize).X * 0.5f);
+			SwitchScroll(screenSize);
+
+			currentEntryId = WrapIndex(currentEntryId + 1);
+			dirty = true;
+		}
+		void SwitchScroll(Vector2 screenSize)
+		{
+			switchScrollPos = Math.Max(-screenSize.X, Math.Min(switchScrollPos, screenSize.X)); // clamp to reasonable value so the screen doesn't get left behind
+			switchScrollScale = 1f;
+
+			while (Math.Abs(switchScrollPos) < 128)
+			{
+				switchScrollPos *= 2f;
+				switchScrollScale /= 2f;
+			}
 		}
 
 		void WrapIndex() { currentEntryId = WrapIndex(currentEntryId); }

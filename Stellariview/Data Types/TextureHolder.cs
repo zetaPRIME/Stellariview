@@ -53,12 +53,20 @@ namespace Stellariview
 
 		public void Load()
 		{
-			if (state == TextureState.Loaded || state == TextureState.Error) return;
+			if (state == TextureState.Loaded || state == TextureState.Error) { Prioritize(); return; }
 			if (state != TextureState.Loading && Core.frameTime != null) loadStartGameTime = Core.frameTime.TotalGameTime.TotalSeconds;
 			state = TextureState.Loading;
 
 			if (loadQueue.Contains(this)) loadQueue.Remove(this);
 			loadQueue.Insert(0, this);
+		}
+
+		void Prioritize()
+		{
+			if (state == TextureState.Error) return;
+			// freshen so as not to unload at weird times
+			if (allLoaded.Contains(this)) allLoaded.Remove(this);
+			allLoaded.Add(this);
 		}
 
 		public void Unload() {

@@ -29,6 +29,8 @@ namespace Stellariview
 		public static GameTime frameTime;
 		public static float frameTimeTotal;
 
+		public static float deltaTime, deltaTimeDraw;
+
 		public static SpriteFont fontDebug;
 		public static Texture2D txPixel;
 
@@ -116,7 +118,8 @@ namespace Stellariview
 		{
 			float prevFrameTime = frameTimeTotal;
 			float thisFrameTime = (float)gameTime.TotalGameTime.TotalSeconds;
-			if (thisFrameTime - prevFrameTime < 1f / 60f) return; // don't need more than 60fps
+			//if (thisFrameTime - prevFrameTime < 1f / 60f) return; // don't need more than 60fps
+			deltaTimeDraw = thisFrameTime - prevFrameTime;
 
 			frameTime = gameTime;
 			frameTimeTotal = thisFrameTime;
