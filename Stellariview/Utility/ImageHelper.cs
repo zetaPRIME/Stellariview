@@ -20,6 +20,7 @@ using LibAPNG;
 
 using Path = Fluent.IO.Path;
 using Color = Microsoft.Xna.Framework.Color;
+using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
 namespace Stellariview
 {
@@ -70,6 +71,32 @@ namespace Stellariview
 			GraphicsDevice.SetRenderTarget(null);
 
 			return result as Texture2D;
+		}
+
+		public static Texture2D MakeGradient(int width, int height, Color first, Color second)
+		{
+			SpriteBatch sb = Core.spriteBatch;
+			RenderTarget2D res = new RenderTarget2D(sb.GraphicsDevice, width, height);
+
+			Vector4 vFirst = first.ToVector4();
+			Vector4 vSecond = second.ToVector4();
+
+			Texture2D txPixel = Core.txPixel;
+
+			sb.GraphicsDevice.SetRenderTarget(res);
+			sb.GraphicsDevice.Clear(Color.Transparent);
+
+			sb.Begin();
+			for (int i = 0; i < height; i++)
+			{
+				float p = (float)i / (float)height;
+				sb.Draw(txPixel, new Rectangle(0, i, width, 1), new Color(vSecond * p + vFirst * (1f - p)));
+			}
+			sb.End();
+
+			sb.GraphicsDevice.SetRenderTarget(null);
+
+			return res;
 		}
 
 		public static Texture2D LoadFromStream(FileStream fs)

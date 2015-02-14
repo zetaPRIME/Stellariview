@@ -47,10 +47,12 @@ namespace Stellariview
 
 		float switchScrollPos = 0f;
 		float switchScrollScale = 0f;
-		bool enableAnimation = true;
+		bool enableUIAnimations = true;
+		bool enableBackground = true;
 
 		bool dirty = true;
 
+		Texture2D txBG;
 		void AppInit()
 		{
 			// build list
@@ -67,6 +69,9 @@ namespace Stellariview
 
 			CurrentEntry = entriesCurrent.Find(p => (p.sourcePath == startingPath));
 			if (currentEntryId < 0) currentEntryId = 0; // no negative numbers >:(
+
+			// build gradient
+			txBG = ImageHelper.MakeGradient(1, GraphicsDevice.Adapter.CurrentDisplayMode.Height, new Color(0.1f, 0.1f, 0.125f), new Color(0.2f, 0.2f, 0.25f));
 
 			TextureHolder.StartLoadThread();
 		}
@@ -110,7 +115,9 @@ namespace Stellariview
 
 				if (Input.KeyPressed(Keys.F11)) ToggleFullscreen();
 
-				if (Input.KeyPressed(Keys.A)) enableAnimation = !enableAnimation;
+				if (Input.KeyPressed(Keys.A)) enableUIAnimations = !enableUIAnimations;
+				if (Input.KeyPressed(Keys.B)) enableBackground = !enableBackground;
+
 				if (Input.KeyPressed(Keys.S)) Shuffle();
 				if (Input.KeyPressed(Keys.F)) fadeLevel = (fadeLevel + 1) % fadeLevels.Length;
 
@@ -159,17 +166,19 @@ namespace Stellariview
 			float proportion = PER_SECOND + (PER_SECOND_INVERT * deltaTimeDraw);
 			proportion = Math.Max(0f, Math.Min(proportion, 1f));
 			switchScrollScale *= proportion;
-			if (!enableAnimation) switchScrollScale = 0;
+			if (!enableUIAnimations) switchScrollScale = 0;
 
 			if (Math.Abs(switchScrollScale) < 0.005f) switchScrollScale = 0;
 
 			Vector2 drawOrigin = screenCenter + new Vector2(switchScrollPos * switchScrollScale, 0);
 
 			Vector2 ces = CurrentEntry.GetSize(screenSize);
-			if (ces.X % 2 == 1) drawOrigin += new Vector2(0.5f, 0f); // enforce clarity on odd dimensions
+			if (ces.X % 2 != screenSize.X % 2) drawOrigin += new Vector2(0.5f, 0f); // enforce clarity on dimensions not matching parity
 
 			spriteBatch.Begin();//SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.AnisotropicClamp, DepthStencilState.Default, RasterizerState.CullNone);
 			//spriteBatch.Draw(imgCurrent, Vector2.Zero, Color.White);
+
+			if (enableBackground) spriteBatch.Draw(txBG, Window.ClientBounds, Color.White); // bg
 
 			PrevEntry2.Draw(spriteBatch, drawOrigin - new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + PrevEntry.GetSize(screenSize).X + PrevEntry2.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor2);
 			NextEntry2.Draw(spriteBatch, drawOrigin + new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + NextEntry.GetSize(screenSize).X + NextEntry2.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor2);
@@ -178,7 +187,7 @@ namespace Stellariview
 			NextEntry.Draw(spriteBatch, drawOrigin + new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + NextEntry.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor);
 
 			Vector2 parity = Vector2.Zero;
-			if (ces.Y % 2 == 1) parity += new Vector2(0f, 0.5f); // enforce clarity on odd dimensions
+			if (ces.Y % 2 != screenSize.Y % 2) parity += new Vector2(0f, 0.5f); // enforce clarity on dimensions not matching parity
 			CurrentEntry.Draw(spriteBatch, drawOrigin + parity, screenSize);
 
 			spriteBatch.End();
