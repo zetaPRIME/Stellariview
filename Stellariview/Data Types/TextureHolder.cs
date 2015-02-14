@@ -182,15 +182,19 @@ namespace Stellariview
 			{
 				double time = Core.frameTime.TotalGameTime.TotalSeconds - loadStartGameTime;
 				float rotation = (float)(time * Math.PI * 1.0);
-				
+
 				const int numDots = 8;
 				const float rotStep = (float)(Math.PI * 2 / numDots);
+
+				int off = (int)(time * Math.PI * numDots * 0.32) % numDots;
+				//off = numDots - off;
 
 				Vector4 drawColorVec = drawColor.ToVector4();
 
 				for (int i = 0; i < numDots; i++)
 				{
-					sb.Draw(Core.txPixel, position + new Vector2((float)Math.Cos(rotation - rotStep * i), (float)Math.Sin(rotation - rotStep * i)) * 20f, null, new Color(drawColorVec * (1f - i * (1f/8f))), (float)(Math.PI / 4), Vector2.One * 0.5f, new Vector2(5f, 5f), SpriteEffects.None, 0f);
+					int oi = (i + off) % numDots;
+					sb.Draw(Core.txPixel, position + new Vector2((float)Math.Cos(rotation - rotStep * i), (float)Math.Sin(rotation - rotStep * i)) * 20f, null, new Color(drawColorVec * (1f - oi * (1f/8f))), (float)(Math.PI / 4), Vector2.One * 0.5f, new Vector2(5f, 5f), SpriteEffects.None, 0f);
 				}
 			}
 
