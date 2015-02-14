@@ -40,7 +40,7 @@ namespace LibAPNG.XNAHelper
 			SpriteBatch sb = Core.spriteBatch;
 			Texture2D baseFrame = anim.frames[0].texture;
 
-			TextureHolder.prepareOverrun = true;
+			//TextureHolder.prepareOverrun = true;
 
 			if (rawTextureList.Count < numFrames) // init phase
 			{
