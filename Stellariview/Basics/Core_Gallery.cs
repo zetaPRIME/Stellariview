@@ -203,10 +203,13 @@ namespace Stellariview
 			switchScrollPos = Math.Max(-screenSize.X, Math.Min(switchScrollPos, screenSize.X)); // clamp to reasonable value so the screen doesn't get left behind
 			switchScrollScale = 1f;
 
-			while (Math.Abs(switchScrollPos) < 128)
+			if (switchScrollPos != 0)
 			{
-				switchScrollPos *= 2f;
-				switchScrollScale /= 2f;
+				while (Math.Abs(switchScrollPos) < 128)
+				{
+					switchScrollPos *= 2f;
+					switchScrollScale /= 2f;
+				}
 			}
 		}
 

@@ -84,6 +84,22 @@
     <Compile Include="FluentPath\Path.cs" />
     <Compile Include="FluentPath\PathBase.cs" />
     <Compile Include="FluentPath\PathConverter.cs" />
+    <Compile Include="LibAPNG\APNG.cs" />
+    <Compile Include="LibAPNG\APNGHelper\APNGFrame.cs" />
+    <Compile Include="LibAPNG\APNGHelper\APNGHelper.cs" />
+    <Compile Include="LibAPNG\APNGHelper\APNGPreparer.cs" />
+    <Compile Include="LibAPNG\Chunks\acTLChunk.cs" />
+    <Compile Include="LibAPNG\Chunks\Chunk.cs" />
+    <Compile Include="LibAPNG\Chunks\fcTLChunk.cs" />
+    <Compile Include="LibAPNG\Chunks\fdATChunk.cs" />
+    <Compile Include="LibAPNG\Chunks\IDATChunk.cs" />
+    <Compile Include="LibAPNG\Chunks\IENDChunk.cs" />
+    <Compile Include="LibAPNG\Chunks\IHDRChunk.cs" />
+    <Compile Include="LibAPNG\Chunks\OtherChunk.cs" />
+    <Compile Include="LibAPNG\CrcHelper.cs" />
+    <Compile Include="LibAPNG\Frame.cs" />
+    <Compile Include="LibAPNG\Helper.cs" />
+    <Compile Include="LibAPNG\StreamExtensions.cs" />
     <Compile Include="LitJson\IJsonWrapper.cs" />
     <Compile Include="LitJson\JsonData.cs" />
     <Compile Include="LitJson\JsonException.cs" />
@@ -97,8 +113,10 @@
     <Compile Include="Stellariview\Basics\Core_Gallery.cs" />
     <Compile Include="Stellariview\Basics\Program.cs" />
     <Compile Include="Stellariview\Data Types\AnimatedTexture.cs" />
+    <Compile Include="Stellariview\Data Types\AnimPreparer.cs" />
     <Compile Include="Stellariview\Data Types\TextureHolder.cs" />
-    <Compile Include="Stellariview\Helpers\NumericComparer.cs" />
+    <Compile Include="Stellariview\Utility\ImageHelper.cs" />
+    <Compile Include="Stellariview\Utility\NumericComparer.cs" />
     <Compile Include="Stellariview\Input\Input.cs" />
   </ItemGroup>
   <ItemGroup />
@@ -125,6 +143,8 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <None Include="LibAPNG\LICENSE" />
+    <None Include="LibAPNG\README.md" />
     <None Include="Microsoft.Xna.Framework.RuntimeProfile" />
   </ItemGroup>
   <ItemGroup>

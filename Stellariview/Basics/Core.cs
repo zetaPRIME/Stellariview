@@ -30,6 +30,8 @@ namespace Stellariview
 		public static float frameTimeTotal;
 
 		public static float deltaTime, deltaTimeDraw;
+		public static int drawCycleId = 0;
+		Random dcRand = new Random();
 
 		public static SpriteFont fontDebug;
 		public static Texture2D txPixel;
@@ -120,6 +122,9 @@ namespace Stellariview
 			float thisFrameTime = (float)gameTime.TotalGameTime.TotalSeconds;
 			//if (thisFrameTime - prevFrameTime < 1f / 60f) return; // don't need more than 60fps
 			deltaTimeDraw = thisFrameTime - prevFrameTime;
+			int ndc = drawCycleId;
+			while (ndc == drawCycleId) ndc = dcRand.Next();
+			drawCycleId = ndc;
 
 			frameTime = gameTime;
 			frameTimeTotal = thisFrameTime;

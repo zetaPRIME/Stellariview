@@ -17,66 +17,121 @@ using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
 
+using LibAPNG;
+using LibAPNG.XNAHelper;
+
 using Path = Fluent.IO.Path;
 using Color = Microsoft.Xna.Framework.Color;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
 namespace Stellariview
 {
+	public struct AnimFrame
+	{
+		public Texture2D texture;
+		public float duration;
+
+		public AnimFrame(Texture2D texture, float duration = 0.1f) { this.texture = texture; this.duration = duration; }
+	}
+
 	public class AnimatedTexture
 	{
-		public struct AnimFrame
-		{
-			public Texture2D texture;
-			public float duration;
-
-			public AnimFrame(Texture2D texture, float duration = 0.1f) { this.texture = texture; this.duration = duration; }
-		}
-
 		public List<AnimFrame> frames = new List<AnimFrame>();
 		public int curFrameId = 0;
-		public float frameStartTime = -1;
+		public float frameTime = 0;
+		int frameDrawCycle = -1;
 
-		public AnimatedTexture(Image img)
+		public AnimPreparer prep = null;
+
+		public AnimatedTexture(Path sourcePath)
 		{
-			Load(img);
+			Load(sourcePath);
 		}
 
-		void Load(Image img)
+		void Load(Path sourcePath)
 		{
-			FrameDimension dimension = new FrameDimension(img.FrameDimensionsList[0]);
-			int frameCount = img.GetFrameCount(dimension);
+			if (sourcePath.Extension == ".gif") LoadGif(sourcePath);
+			else if (sourcePath.Extension == ".png") LoadApng(sourcePath);
+		}
 
-			PropertyItem frameMeta = img.PropertyItems[0];
-
-			int[] frameDuration = new int[frameMeta.Len / 4];
-
-			int count = 0;
-			for (int i = 0; i < frameMeta.Len; i += 4)
+		void LoadGif(Path sourcePath)
+		{
+			sourcePath.Open((FileStream fs) =>
 			{
-				frameDuration[count++] = ((((int)frameMeta.Value[i + 1]) << 8) + frameMeta.Value[i]) * 10;
-			}
+				Image img = Image.FromStream(fs);
 
-			int defaultDelay = 10;
-			if (frameDuration.Length > 0) defaultDelay = frameDuration[0];
+				FrameDimension dimension = new FrameDimension(img.FrameDimensionsList[0]);
+				int frameCount = img.GetFrameCount(dimension);
 
-			// actually set up textures
-			Texture2D res = null;
-			for (int i = 0; i < frameCount; i++)
-			{
-				int duration = defaultDelay;
-				if (i < frameDuration.Length) duration = frameDuration[i];
+				PropertyItem frameMeta = img.PropertyItems[0];
 
-				img.SelectActiveFrame(dimension, i);
-				Bitmap bmp = new Bitmap(img);
-				using (MemoryStream ms = new MemoryStream())
+				int[] frameDuration = new int[frameMeta.Len / 4];
+
+				int count = 0;
+				for (int i = 0; i < frameMeta.Len; i += 4)
 				{
-					bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-					res = Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, ms);
+					frameDuration[count++] = ((((int)frameMeta.Value[i + 1]) << 8) + frameMeta.Value[i]) * 10;
 				}
 
-				frames.Add(new AnimFrame(res, (float)duration / 1000f));
-			}
+				int defaultDelay = 10;
+				if (frameDuration.Length > 0) defaultDelay = frameDuration[0];
+
+				// actually set up textures
+				Texture2D res = null;
+				for (int i = 0; i < frameCount; i++)
+				{
+					int duration = defaultDelay;
+					if (i < frameDuration.Length) duration = frameDuration[i];
+
+					img.SelectActiveFrame(dimension, i);
+					Bitmap bmp = new Bitmap(img);
+					using (MemoryStream ms = new MemoryStream())
+					{
+						bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+						res = Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, ms);
+					}
+
+					frames.Add(new AnimFrame(res, (float)duration / 1000f));
+				}
+
+				// finally, add preparer
+				prep = new BasicAnimPreparer();
+			});
+		}
+
+		void LoadApng(Path sourcePath)
+		{
+			sourcePath.Open((FileStream fs) =>
+			{
+				using (MemoryStream ms = new MemoryStream()) // read in first, don't repeat disk I/O
+				{
+					fs.CopyTo(ms);
+					ms.Position = 0;
+					APNG apng = new APNG(ms.ReadBytes((int)ms.Length));
+
+					if (apng.IsSimplePNG) frames.Add(new AnimFrame(ImageHelper.LoadFromStream((ms))));
+					else
+					{
+						Texture2D baseTex = ImageHelper.LoadFromApngFrame(apng.DefaultImage);
+						foreach (Frame f in apng.Frames)
+						{
+							float duration = 0.1f;
+							if (f.fcTLChunk != null) duration = (float)f.fcTLChunk.DelayNum / (float)f.fcTLChunk.DelayDen;
+							//Texture2D tex = Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, new MemoryStream(f.GetStream().ToArray()));
+							frames.Add(new AnimFrame(baseTex, duration));
+						}
+					}
+
+					prep = new APNGPreparer(apng);
+				}
+			});
+		}
+
+		public void Prepare(TextureHolder tex)
+		{
+			if (prep != null) prep.Prepare(tex, this);
+
+			if (tex.state == TextureHolder.TextureState.Loaded) prep = null;
 		}
 
 		public void Draw(SpriteBatch sb, Vector2 position, Rectangle? sourceRectangle, Color color, float rotation, Vector2 origin, float scale, SpriteEffects effect, float depth)
@@ -85,12 +140,12 @@ namespace Stellariview
 		}
 		public void Draw(SpriteBatch sb, Vector2 position, Rectangle? sourceRectangle, Color color, float rotation, Vector2 origin, Vector2 scale, SpriteEffects effect, float depth)
 		{
-			float curTime = Core.frameTimeTotal;
-			if (frameStartTime == -1) frameStartTime = curTime;
+			if (frameDrawCycle != Core.drawCycleId) frameTime += Core.deltaTimeDraw;
+			frameDrawCycle = Core.drawCycleId;
 
-			while (curTime > frameStartTime + frames[curFrameId].duration)
+			while (frameTime > frames[curFrameId].duration)
 			{
-				frameStartTime += frames[curFrameId].duration;
+				frameTime -= frames[curFrameId].duration;
 				curFrameId = (curFrameId + 1) % frames.Count;
 			}
 

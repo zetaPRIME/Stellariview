@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Graphics.PackedVector;
 
 namespace LibAPNG.XNAHelper
 {
-    internal struct APNGFrame
+    public struct APNGFrame
     {
         #region Constants and Fields
 

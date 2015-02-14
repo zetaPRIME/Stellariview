@@ -28,7 +28,7 @@ namespace Stellariview
 
 		double loadStartGameTime = 0;
 
-		public enum TextureState { Unloaded, Loading, Loaded, Error }
+		public enum TextureState { Unloaded, Loading, Preparing, Loaded, Error }
 
 		public TextureState state = TextureState.Unloaded;
 
@@ -36,7 +36,7 @@ namespace Stellariview
 		public AnimatedTexture animation;
 		public Path sourcePath;
 
-		public bool needsConverted = false;
+		public bool mainTexPremultiplied = false;
 
 		public TextureHolder(Path path, bool loadImmediate)
 		{
@@ -91,19 +91,19 @@ namespace Stellariview
 				loadQueue.Remove(this);
 				return;
 			}
-			sourcePath.Open((FileStream fs) =>
+			if (new[]{ ".gif", ".png" }.Contains(sourcePath.Extension))
 			{
-				if (sourcePath.Extension == ".gif")
-				{
-					Image img = Image.FromStream(fs);
-					resAnim = new AnimatedTexture(img);
+				resAnim = new AnimatedTexture(sourcePath);
 
-					res = resAnim.frames[0].texture;
+				res = resAnim.frames[0].texture;
 
-					if (resAnim.frames.Count == 1) resAnim = null; // discard
-				}
-				else
+				if (resAnim.frames.Count == 1) resAnim = null; // discard
+			}
+			else
+			{
+				sourcePath.Open((FileStream fs) =>
 				{
+
 					try
 					{
 						res = Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, fs);
@@ -123,16 +123,16 @@ namespace Stellariview
 							}
 						}
 					}
-				}
-			});
+				});
+			}
 			if (res != null && state == TextureState.Loading)
 			{
 				texture = res;
 				animation = resAnim;
 				if (DEBUG) Console.WriteLine("Loading of " + sourcePath.FileName + " took " + (DateTime.Now - loadStartTime).TotalSeconds + "s; dimensions " + res.Width + "x" + res.Height);
-				state = TextureState.Loaded;
+				state = TextureState.Preparing;
 
-				needsConverted = true;
+				mainTexPremultiplied = false;
 
 				allLoaded.Add(this);
 				loadQueue.Remove(this);
@@ -178,7 +178,7 @@ namespace Stellariview
 				}
 			}
 
-			else if (state == TextureState.Loading)
+			else if (state == TextureState.Loading || state == TextureState.Preparing)
 			{
 				double time = Core.frameTime.TotalGameTime.TotalSeconds - loadStartGameTime;
 				float rotation = (float)(time * Math.PI * 1.0);
@@ -205,51 +205,11 @@ namespace Stellariview
 			}
 		}
 
-		static Texture2D ConvertToPreMultipliedAlphaGPU(Texture2D texture)
+		public void Prepare()
 		{
-			// code borrowed from http://jakepoz.com/jake_poznanski__speeding_up_xna.html
-
-			GraphicsDevice GraphicsDevice = Core.spriteBatch.GraphicsDevice;
-			
-			//Setup a render target to hold our final texture which will have premulitplied alpha values
-			RenderTarget2D result = new RenderTarget2D(GraphicsDevice, texture.Width, texture.Height);
-
-			GraphicsDevice.SetRenderTarget(result);
-			GraphicsDevice.Clear(Color.Black);
-
-			//Multiply each color by the source alpha, and write in just the color values into the final texture
-			BlendState blendColor = new BlendState();
-			blendColor.ColorWriteChannels = ColorWriteChannels.Red | ColorWriteChannels.Green | ColorWriteChannels.Blue;
-
-			blendColor.AlphaDestinationBlend = Blend.Zero;
-			blendColor.ColorDestinationBlend = Blend.Zero;
-
-			blendColor.AlphaSourceBlend = Blend.SourceAlpha;
-			blendColor.ColorSourceBlend = Blend.SourceAlpha;
-
-			SpriteBatch spriteBatch = new SpriteBatch(GraphicsDevice);
-			spriteBatch.Begin(SpriteSortMode.Immediate, blendColor);
-			spriteBatch.Draw(texture, texture.Bounds, Color.White);
-			spriteBatch.End();
-
-			//Now copy over the alpha values from the PNG source texture to the final one, without multiplying them
-			BlendState blendAlpha = new BlendState();
-			blendAlpha.ColorWriteChannels = ColorWriteChannels.Alpha;
-
-			blendAlpha.AlphaDestinationBlend = Blend.Zero;
-			blendAlpha.ColorDestinationBlend = Blend.Zero;
-
-			blendAlpha.AlphaSourceBlend = Blend.One;
-			blendAlpha.ColorSourceBlend = Blend.One;
-
-			spriteBatch.Begin(SpriteSortMode.Immediate, blendAlpha);
-			spriteBatch.Draw(texture, texture.Bounds, Color.White);
-			spriteBatch.End();
-
-			//Release the GPU back to drawing to the screen
-			GraphicsDevice.SetRenderTarget(null);
-
-			return result as Texture2D;
+			if (!mainTexPremultiplied) { texture = ImageHelper.ConvertToPreMultipliedAlphaGPU(texture); mainTexPremultiplied = true; }
+			if (animation != null) animation.Prepare(this);
+			else state = TextureState.Loaded;
 		}
 
 		Texture2D ConvertToPreMultipliedAlpha(Texture2D texture)
@@ -280,10 +240,9 @@ namespace Stellariview
 			lock (allLoaded) queue = new List<TextureHolder>(allLoaded);
 			foreach (TextureHolder tex in queue)
 			{
-				if (tex.needsConverted)
+				if (tex.state == TextureState.Preparing)
 				{
-					tex.texture = ConvertToPreMultipliedAlphaGPU(tex.texture);
-					tex.needsConverted = false;
+					tex.Prepare();
 				}
 			}
 		}
