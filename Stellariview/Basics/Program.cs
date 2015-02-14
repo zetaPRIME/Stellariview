@@ -29,6 +29,7 @@ namespace Stellariview
 		static void ProcessArguments(string[] args)
 		{
 			if (args.Length > 0) Core.startingPath = new Path(args[0]);
+			//else Core.startingPath = new Path(@"D:\~cyr\data\new\anim");
 			else Core.startingPath = new Path(Assembly.GetCallingAssembly().Location).Up(); // containing folder
 		}
 	}

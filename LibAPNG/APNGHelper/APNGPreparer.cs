@@ -31,7 +31,8 @@ namespace LibAPNG.XNAHelper
 			// load raw component frames IN THE LOAD THREAD YOU IDIOT
 			for (int i = 0; i < numFrames; i++)
 			{
-				rawTextureListNonPre.Add(Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, new MemoryStream(frameList[i].GetStream().ToArray())));
+				//rawTextureListNonPre.Add(Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, new MemoryStream(frameList[i].GetStream().ToArray())));
+				rawTextureListNonPre.Add(ImageHelper.LoadFromApngFrame(frameList[i]));
 			}
 		}
 

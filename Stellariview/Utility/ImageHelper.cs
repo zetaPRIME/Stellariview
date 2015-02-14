@@ -109,7 +109,9 @@ namespace Stellariview
 		}
 		public static Texture2D LoadFromApngFrame(Frame f)
 		{
-			return LoadFromStream(new MemoryStream(f.GetStream().ToArray()));
+			Texture2D res = null;
+			using (MemoryStream ms = new MemoryStream(f.GetStream().ToArray())) res = LoadFromStream(ms);
+			return res;
 		}
 	}
 }
