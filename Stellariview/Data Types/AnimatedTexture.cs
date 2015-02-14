@@ -41,6 +41,8 @@ namespace Stellariview
 		public float frameTime = 0;
 		int frameDrawCycle = -1;
 
+		bool loop = true;
+
 		public AnimPreparer prep = null;
 
 		public AnimatedTexture(Path sourcePath)
@@ -112,7 +114,9 @@ namespace Stellariview
 					if (apng.IsSimplePNG) frames.Add(new AnimFrame(ImageHelper.LoadFromStream((ms))));
 					else
 					{
-						Texture2D baseTex = ImageHelper.LoadFromApngFrame(apng.DefaultImage);
+						loop = apng.acTLChunk.NumPlays < 1;
+						//Texture2D baseTex = ImageHelper.LoadFromApngFrame(apng.DefaultImage);
+						Texture2D baseTex = ImageHelper.LoadFromApngFrame(apng.Frames[0]);
 						foreach (Frame f in apng.Frames)
 						{
 							float duration = 0.1f;
@@ -145,6 +149,11 @@ namespace Stellariview
 
 			while (frameTime > frames[curFrameId].duration)
 			{
+				if (!loop && curFrameId == frames.Count - 1)
+				{
+					frameTime = 0;
+					break;
+				}
 				frameTime -= frames[curFrameId].duration;
 				curFrameId = (curFrameId + 1) % frames.Count;
 			}

@@ -42,11 +42,12 @@ namespace Stellariview
 		TextureHolder NextEntry2 { get { return entriesCurrent[WrapIndex(currentEntryId + 2)]; } }
 		TextureHolder PrevEntry2 { get { return entriesCurrent[WrapIndex(currentEntryId - 2)]; } }
 
-		int fadeLevel = 3;
+		int fadeLevel = 1;
 		float[] fadeLevels = { 1f, 0.75f, 0.5f, 0.25f };
 
 		float switchScrollPos = 0f;
 		float switchScrollScale = 0f;
+		bool enableAnimation = true;
 
 		bool dirty = true;
 
@@ -109,6 +110,7 @@ namespace Stellariview
 
 				if (Input.KeyPressed(Keys.F11)) ToggleFullscreen();
 
+				if (Input.KeyPressed(Keys.A)) enableAnimation = !enableAnimation;
 				if (Input.KeyPressed(Keys.S)) Shuffle();
 				if (Input.KeyPressed(Keys.F)) fadeLevel = (fadeLevel + 1) % fadeLevels.Length;
 
@@ -157,10 +159,14 @@ namespace Stellariview
 			float proportion = PER_SECOND + (PER_SECOND_INVERT * deltaTimeDraw);
 			proportion = Math.Max(0f, Math.Min(proportion, 1f));
 			switchScrollScale *= proportion;
+			if (!enableAnimation) switchScrollScale = 0;
 
 			if (Math.Abs(switchScrollScale) < 0.005f) switchScrollScale = 0;
 
 			Vector2 drawOrigin = screenCenter + new Vector2(switchScrollPos * switchScrollScale, 0);
+
+			Vector2 ces = CurrentEntry.GetSize(screenSize);
+			if (ces.X % 2 == 1) drawOrigin += new Vector2(0.5f, 0f); // enforce clarity on odd dimensions
 
 			spriteBatch.Begin();//SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.AnisotropicClamp, DepthStencilState.Default, RasterizerState.CullNone);
 			//spriteBatch.Draw(imgCurrent, Vector2.Zero, Color.White);
@@ -171,7 +177,9 @@ namespace Stellariview
 			PrevEntry.Draw(spriteBatch, drawOrigin - new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + PrevEntry.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor);
 			NextEntry.Draw(spriteBatch, drawOrigin + new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + NextEntry.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor);
 
-			CurrentEntry.Draw(spriteBatch, drawOrigin, screenSize);
+			Vector2 parity = Vector2.Zero;
+			if (ces.Y % 2 == 1) parity += new Vector2(0f, 0.5f); // enforce clarity on odd dimensions
+			CurrentEntry.Draw(spriteBatch, drawOrigin + parity, screenSize);
 
 			spriteBatch.End();
 		}
