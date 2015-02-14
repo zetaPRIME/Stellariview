@@ -53,7 +53,7 @@ namespace Stellariview
 
 		public void Load()
 		{
-			if (state == TextureState.Loaded || state == TextureState.Error) { Prioritize(); return; }
+			if (state == TextureState.Loaded || state == TextureState.Error || state == TextureState.Preparing) { Prioritize(); return; }
 			if (state != TextureState.Loading && Core.frameTime != null) loadStartGameTime = Core.frameTime.TotalGameTime.TotalSeconds;
 			state = TextureState.Loading;
 
@@ -234,8 +234,10 @@ namespace Stellariview
 		public static List<TextureHolder> allLoaded = new List<TextureHolder>();
 		const int MAX_LOADED = 16;
 
+		public static bool prepareOverrun = false;
 		public static void ProcessConvertQueue()
 		{
+			prepareOverrun = false;
 			List<TextureHolder> queue;
 			lock (allLoaded) queue = new List<TextureHolder>(allLoaded);
 			foreach (TextureHolder tex in queue)
@@ -243,6 +245,7 @@ namespace Stellariview
 				if (tex.state == TextureState.Preparing)
 				{
 					tex.Prepare();
+					if (prepareOverrun) break;
 				}
 			}
 		}
