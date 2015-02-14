@@ -52,7 +52,8 @@ namespace Stellariview
 
 		bool dirty = true;
 
-		Texture2D txBG;
+		public static Texture2D txBG, txCircle;
+
 		void AppInit()
 		{
 			// build list
@@ -72,6 +73,10 @@ namespace Stellariview
 
 			// build gradient
 			txBG = ImageHelper.MakeGradient(1, GraphicsDevice.Adapter.CurrentDisplayMode.Height, new Color(0.1f, 0.1f, 0.125f), new Color(0.2f, 0.2f, 0.25f));
+			// and circle
+			txCircle = ImageHelper.MakeCircle(512);
+			// fuzz circle
+			for (int i = 0; i < 8; i++) txCircle = ImageHelper.Fuzz(txCircle, 16+i);
 
 			TextureHolder.StartLoadThread();
 		}
@@ -189,6 +194,9 @@ namespace Stellariview
 			Vector2 parity = Vector2.Zero;
 			if (ces.Y % 2 != screenSize.Y % 2) parity += new Vector2(0f, 0.5f); // enforce clarity on dimensions not matching parity
 			CurrentEntry.Draw(spriteBatch, drawOrigin + parity, screenSize);
+
+			// test: view circle
+			//spriteBatch.Draw(txCircle, screenCenter, null, Color.White, 0f, Vector2.One * 256f, 1f, SpriteEffects.None, 0f);
 
 			spriteBatch.End();
 		}

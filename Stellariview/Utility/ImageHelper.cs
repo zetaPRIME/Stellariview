@@ -99,6 +99,62 @@ namespace Stellariview
 			return res;
 		}
 
+		public static Texture2D MakeCircle(int size)
+		{
+			SpriteBatch sb = Core.spriteBatch;
+			RenderTarget2D res = new RenderTarget2D(sb.GraphicsDevice, size, size);
+
+			Texture2D txPixel = Core.txPixel;
+
+			sb.GraphicsDevice.SetRenderTarget(res);
+			sb.GraphicsDevice.Clear(Color.Transparent);
+
+			sb.Begin();
+			for (int i = 0; i < size; i++)
+			{
+				float p = (float)i / (float)size;
+				float t = Math.Abs(0.5f - p);
+				float ts = t * 2;
+
+				//int width = (int)(Math.Sin(Math.PI * p) * size / 2);
+				int width = (int)((float)size * 0.5f * Math.Sqrt(1 - (ts * ts)));
+
+				//Rectangle rect = new Rectangle(size / 2 - width, i, width * 2, 1);
+
+				sb.Draw(txPixel, new Rectangle(size / 2 - width, i, width * 2, 1), Color.White);
+			}
+			sb.End();
+
+			sb.GraphicsDevice.SetRenderTarget(null);
+
+			return res;
+		}
+		public static Texture2D Fuzz(Texture2D inp, int proportion) {
+			SpriteBatch sb = Core.spriteBatch;
+			RenderTarget2D res = new RenderTarget2D(sb.GraphicsDevice, inp.Width / proportion, inp.Height / proportion);
+
+			sb.GraphicsDevice.SetRenderTarget(res);
+			sb.GraphicsDevice.Clear(Color.Transparent);
+
+			sb.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.AnisotropicClamp, DepthStencilState.Default, RasterizerState.CullNone);
+			sb.Draw(inp, res.Bounds, Color.White);
+			sb.End();
+
+			Texture2D flip = res;
+			res = new RenderTarget2D(sb.GraphicsDevice, inp.Width, inp.Height);
+
+			sb.GraphicsDevice.SetRenderTarget(res);
+			sb.GraphicsDevice.Clear(Color.Transparent);
+
+			sb.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.AnisotropicClamp, DepthStencilState.Default, RasterizerState.CullNone);
+			sb.Draw(flip, res.Bounds, Color.White);
+			sb.End();
+
+			sb.GraphicsDevice.SetRenderTarget(null);
+
+			return res;
+		}
+
 		public static Texture2D LoadFromStream(FileStream fs)
 		{
 			Texture2D res = null;
@@ -128,6 +184,10 @@ namespace Stellariview
 						bmp.Save(ms2, System.Drawing.Imaging.ImageFormat.Png);
 						res = Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, ms2);
 					}
+				}
+				else if (e.Message.Contains("context"))
+				{
+					// threading issue, not sure what to do here
 				}
 				else throw e;
 			}

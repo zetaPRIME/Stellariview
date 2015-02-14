@@ -194,7 +194,12 @@ namespace Stellariview
 				for (int i = 0; i < numDots; i++)
 				{
 					int oi = (i + off) % numDots;
-					sb.Draw(Core.txPixel, position + new Vector2((float)Math.Cos(rotation - rotStep * i), (float)Math.Sin(rotation - rotStep * i)) * 20f, null, new Color(drawColorVec * (1f - oi * (1f/8f))), (float)(Math.PI / 4), Vector2.One * 0.5f, new Vector2(5f, 5f), SpriteEffects.None, 0f);
+					// pixel version
+					//sb.Draw(Core.txPixel, position + new Vector2((float)Math.Cos(rotation - rotStep * i), (float)Math.Sin(rotation - rotStep * i)) * 20f, null, new Color(drawColorVec * (1f - oi * (1f/8f))), (float)(Math.PI / 4), Vector2.One * 0.5f, new Vector2(5f, 5f), SpriteEffects.None, 0f);
+					// circle version
+					float scale = 8.5f / 512f;
+					//scale = 50f / 512f;
+					sb.Draw(Core.txCircle, position + new Vector2((float)Math.Cos(rotation - rotStep * i), (float)Math.Sin(rotation - rotStep * i)) * 20f, null, new Color(drawColorVec * (1f - oi * (1f / 8f))), 0f, Vector2.One * 256f, scale, SpriteEffects.None, 0f);
 				}
 			}
 
