@@ -7,14 +7,14 @@ namespace Stellariview
 {
 	public abstract class AnimPreparer
 	{
-		public abstract void Prepare(TextureHolder tex, AnimatedTexture anim);
+		public abstract void Prepare(ImageContainer tex, AnimatedTexture anim);
 	}
 
 	public class BasicAnimPreparer : AnimPreparer
 	{
 		int framesDone = 0;
 
-		public override void Prepare(TextureHolder tex, AnimatedTexture anim)
+		public override void Prepare(ImageContainer tex, AnimatedTexture anim)
 		{
 			// convert all frames to premultiplied
 			for (int i = framesDone; i < anim.frames.Count; i++)
@@ -23,7 +23,7 @@ namespace Stellariview
 				framesDone++;
 				return;
 			}
-			tex.state = TextureHolder.TextureState.Loaded;
+			tex.state = ImageContainer.TextureState.Loaded;
 		}
 	}
 }

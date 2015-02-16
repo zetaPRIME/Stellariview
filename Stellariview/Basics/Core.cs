@@ -132,7 +132,7 @@ namespace Stellariview
 
 			lock (gfxLock)
 			{
-				TextureHolder.ProcessConvertQueue();
+				ImageContainer.ProcessConvertQueue();
 
 				spriteBatch.GraphicsDevice.SetRenderTarget(null);
 

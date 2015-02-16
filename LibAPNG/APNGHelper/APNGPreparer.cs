@@ -36,7 +36,7 @@ namespace LibAPNG.XNAHelper
 			}
 		}
 
-		public override void Prepare(TextureHolder tex, AnimatedTexture anim)
+		public override void Prepare(ImageContainer tex, AnimatedTexture anim)
 		{
 			SpriteBatch sb = Core.spriteBatch;
 			Texture2D baseFrame = anim.frames[0].texture;
@@ -175,7 +175,7 @@ namespace LibAPNG.XNAHelper
 			{
 				// retexture animation frames
 				for (int i = 0; i < renderedTextureList.Count; i++) anim.frames[i] = new AnimFrame(renderedTextureList[i], anim.frames[i].duration);
-				tex.state = TextureHolder.TextureState.Loaded;
+				tex.state = ImageContainer.TextureState.Loaded;
 			}
 		}
     }

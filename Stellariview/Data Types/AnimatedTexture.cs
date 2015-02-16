@@ -131,11 +131,11 @@ namespace Stellariview
 			});
 		}
 
-		public void Prepare(TextureHolder tex)
+		public void Prepare(ImageContainer tex)
 		{
 			if (prep != null) prep.Prepare(tex, this);
 
-			if (tex.state == TextureHolder.TextureState.Loaded) prep = null;
+			if (tex.state == ImageContainer.TextureState.Loaded) prep = null;
 		}
 
 		public void Draw(SpriteBatch sb, Vector2 position, Rectangle? sourceRectangle, Color color, float rotation, Vector2 origin, float scale, SpriteEffects effect, float depth)

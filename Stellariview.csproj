@@ -114,7 +114,7 @@
     <Compile Include="Stellariview\Basics\Program.cs" />
     <Compile Include="Stellariview\Data Types\AnimatedTexture.cs" />
     <Compile Include="Stellariview\Data Types\AnimPreparer.cs" />
-    <Compile Include="Stellariview\Data Types\TextureHolder.cs" />
+    <Compile Include="Stellariview\Data Types\ImageContainer.cs" />
     <Compile Include="Stellariview\Utility\ImageHelper.cs" />
     <Compile Include="Stellariview\Utility\NumericComparer.cs" />
     <Compile Include="Stellariview\Input\Input.cs" />

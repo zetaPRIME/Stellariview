@@ -21,7 +21,7 @@ using Color = Microsoft.Xna.Framework.Color;
 
 namespace Stellariview
 {
-	public class TextureHolder
+	public class ImageContainer
 	{
 		const bool DEBUG = true;
 		DateTime loadStartTime;
@@ -38,7 +38,7 @@ namespace Stellariview
 
 		public bool mainTexPremultiplied = false;
 
-		public TextureHolder(Path path, bool loadImmediate)
+		public ImageContainer(Path path, bool loadImmediate)
 		{
 			sourcePath = path;
 			if (loadImmediate) Load();
@@ -239,17 +239,17 @@ namespace Stellariview
 		static Thread loadThread = null;
 
 		public static bool pauseLoad = false;
-		public static List<TextureHolder> loadQueue = new List<TextureHolder>();
-		public static List<TextureHolder> allLoaded = new List<TextureHolder>();
+		public static List<ImageContainer> loadQueue = new List<ImageContainer>();
+		public static List<ImageContainer> allLoaded = new List<ImageContainer>();
 		const int MAX_LOADED = 16;
 
 		public static bool prepareOverrun = false;
 		public static void ProcessConvertQueue()
 		{
 			prepareOverrun = false;
-			List<TextureHolder> queue;
-			lock (allLoaded) queue = new List<TextureHolder>(allLoaded);
-			foreach (TextureHolder tex in queue)
+			List<ImageContainer> queue;
+			lock (allLoaded) queue = new List<ImageContainer>(allLoaded);
+			foreach (ImageContainer tex in queue)
 			{
 				if (tex.state == TextureState.Preparing)
 				{

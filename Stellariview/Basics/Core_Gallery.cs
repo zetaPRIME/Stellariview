@@ -28,19 +28,24 @@ namespace Stellariview
 		public static Path startingPath;
 		Path directory;
 
-		List<TextureHolder> entriesOriginal = new List<TextureHolder>();
-		List<TextureHolder> entriesCurrent;
+		List<ImageContainer> entriesOriginal = new List<ImageContainer>();
+		List<ImageContainer> entriesCurrent;
 		int currentEntryId = 0;
 		int lastFrameEntryId = 0;
-		TextureHolder CurrentEntry
+		ImageContainer CurrentEntry
 		{
 			get { return entriesCurrent[currentEntryId]; }
 			set { currentEntryId = entriesCurrent.IndexOf(value); }
 		}
-		TextureHolder NextEntry { get { return entriesCurrent[WrapIndex(currentEntryId + 1)]; } }
-		TextureHolder PrevEntry { get { return entriesCurrent[WrapIndex(currentEntryId - 1)]; } }
-		TextureHolder NextEntry2 { get { return entriesCurrent[WrapIndex(currentEntryId + 2)]; } }
-		TextureHolder PrevEntry2 { get { return entriesCurrent[WrapIndex(currentEntryId - 2)]; } }
+		ImageContainer NextEntry { get { return entriesCurrent[WrapIndex(currentEntryId + 1)]; } }
+		ImageContainer PrevEntry { get { return entriesCurrent[WrapIndex(currentEntryId - 1)]; } }
+		ImageContainer NextEntry2 { get { return entriesCurrent[WrapIndex(currentEntryId + 2)]; } }
+		ImageContainer PrevEntry2 { get { return entriesCurrent[WrapIndex(currentEntryId - 2)]; } }
+
+		RenderTarget2D paneView;
+		ImageContainer paneContents;
+		int panePosition;
+		float paneScroll;
 
 		int fadeLevel = 1;
 		float[] fadeLevels = { 1f, 0.75f, 0.5f, 0.25f };
@@ -65,7 +70,7 @@ namespace Stellariview
 			NumericComparer nc = new NumericComparer();
 			names.Sort(nc); // make sure proper order
 
-			foreach (string name in names) entriesOriginal.Add(new TextureHolder(directory.Combine(name), false));
+			foreach (string name in names) entriesOriginal.Add(new ImageContainer(directory.Combine(name), false));
 			entriesCurrent = entriesOriginal;
 
 			CurrentEntry = entriesCurrent.Find(p => (p.sourcePath == startingPath));
@@ -78,7 +83,10 @@ namespace Stellariview
 			// fuzz circle
 			for (int i = 0; i < 8; i++) txCircle = ImageHelper.Fuzz(txCircle, 16+i);
 
-			TextureHolder.StartLoadThread();
+			// initialize pane
+			paneView = new RenderTarget2D(spriteBatch.GraphicsDevice, Window.ClientBounds.Width / 2, Window.ClientBounds.Height);
+
+			ImageContainer.StartLoadThread();
 		}
 
 		void AppUpdate(GameTime gameTime)
@@ -101,6 +109,7 @@ namespace Stellariview
 			#region Processing key input
 			bool alt = (Input.KeyHeld(Keys.LeftAlt) || Input.KeyHeld(Keys.RightAlt));
 			bool ctrl = (Input.KeyHeld(Keys.LeftControl) || Input.KeyHeld(Keys.RightControl));
+			bool shift = (Input.KeyHeld(Keys.LeftShift) || Input.KeyHeld(Keys.RightShift));
 
 			if (alt)
 			{
@@ -126,6 +135,30 @@ namespace Stellariview
 				if (Input.KeyPressed(Keys.S)) Shuffle();
 				if (Input.KeyPressed(Keys.F)) fadeLevel = (fadeLevel + 1) % fadeLevels.Length;
 
+				if (Input.KeyPressed(Keys.P))
+				{
+					ImageContainer cache = paneContents;
+					paneContents = CurrentEntry;
+					if (shift && cache != null) CurrentEntry = cache;
+					dirty = true;
+
+					if (panePosition == 0) panePosition = -1; // pop up if not up already
+				}
+				if (Input.KeyPressed(Keys.Tab))
+				{
+					if (paneContents == null) paneContents = CurrentEntry;
+
+					int tgt = -1;
+					if (shift) tgt = 1;
+
+					if (panePosition == tgt) panePosition = 0;
+					else
+					{
+						panePosition = tgt;
+						paneContents.Load();
+					}
+				}
+
 				if (Input.KeyPressed(Keys.Left) || Input.KeyPressed(Keys.Z)) { GoPrev(); }
 				if (Input.KeyPressed(Keys.Right) || Input.KeyPressed(Keys.X)) { GoNext(); }
 			}
@@ -133,13 +166,14 @@ namespace Stellariview
 
 			if (dirty)
 			{
-				TextureHolder.pauseLoad = true;
+				ImageContainer.pauseLoad = true;
 				entriesCurrent[WrapIndex(currentEntryId - 2)].Load();
 				entriesCurrent[WrapIndex(currentEntryId + 2)].Load();
 				entriesCurrent[WrapIndex(currentEntryId - 1)].Load();
 				entriesCurrent[WrapIndex(currentEntryId + 1)].Load();
+				if (paneContents != null && paneScroll != 0f) paneContents.Load();
 				CurrentEntry.Load();
-				TextureHolder.pauseLoad = false;
+				ImageContainer.pauseLoad = false;
 
 				string title = "Stellariview - " + CurrentEntry.sourcePath.FileName;
 				if (entriesCurrent != entriesOriginal) title += " (shuffle)";
@@ -151,8 +185,6 @@ namespace Stellariview
 
 		void AppDraw(GameTime gameTime)
 		{
-			spriteBatch.GraphicsDevice.Clear(Color.Black);
-
 			if (entriesCurrent.Count == 0)
 			{
 				spriteBatch.GraphicsDevice.Clear(new Color(0.25f, 0f, 0f));
@@ -163,8 +195,31 @@ namespace Stellariview
 			Color fadeColor = new Color(new Vector4(curFadeLevel));
 			Color fadeColor2 = new Color(new Vector4(curFadeLevel * curFadeLevel));
 
+			// set up pane position
+			if (paneContents == null) paneScroll = panePosition = 0;
+			else if (!enableUIAnimations) paneScroll = panePosition;
+			else
+			{
+				float scSpeed = deltaTimeDraw * ((9.5f * Math.Abs(paneScroll - panePosition)) + 0.5f);
+				if (paneScroll < panePosition)
+				{
+					paneScroll += scSpeed;
+					if (paneScroll > panePosition) paneScroll = panePosition;
+				}
+				else if (paneScroll > panePosition)
+				{
+					paneScroll -= scSpeed;
+					if (paneScroll < panePosition) paneScroll = panePosition;
+				}
+			}
+
 			Vector2 screenSize = new Vector2(Window.ClientBounds.Width, Window.ClientBounds.Height);
-			Vector2 screenCenter = screenSize * 0.5f;
+
+			Vector2 paneSize = new Vector2((int)(screenSize.X / 2), screenSize.Y);
+			if (paneContents != null) paneSize = new Vector2((int)paneContents.GetSize(paneSize).X, paneSize.Y);
+
+			Vector2 viewSize = screenSize - new Vector2(paneSize.X * Math.Abs(paneScroll), 0);
+			Vector2 screenCenter = viewSize * 0.5f + new Vector2(paneSize.X * Math.Max(0, paneScroll), 0);
 
 			const float PER_SECOND = 0.64f;
 			const float PER_SECOND_INVERT = 1 - PER_SECOND;
@@ -177,28 +232,67 @@ namespace Stellariview
 
 			Vector2 drawOrigin = screenCenter + new Vector2(switchScrollPos * switchScrollScale, 0);
 
-			Vector2 ces = CurrentEntry.GetSize(screenSize);
-			if (ces.X % 2 != screenSize.X % 2) drawOrigin += new Vector2(0.5f, 0f); // enforce clarity on dimensions not matching parity
+			Vector2 ces = CurrentEntry.GetSize(viewSize);
+			if (ces.X % 2 != viewSize.X % 2) drawOrigin += new Vector2(0.5f, 0f); // enforce clarity on dimensions not matching parity
+
+			#region Pane rendertarget
+			if (paneContents != null)
+			{
+				if (paneView.Width != (int)paneSize.X || paneView.Height != (int)paneSize.Y)
+				{
+					paneView = new RenderTarget2D(spriteBatch.GraphicsDevice, (int)paneSize.X, (int)paneSize.Y);
+				}
+
+				spriteBatch.GraphicsDevice.SetRenderTarget(paneView);
+				spriteBatch.GraphicsDevice.Clear(Color.Black);
+
+				spriteBatch.Begin();
+
+				if (enableBackground) spriteBatch.Draw(txBG, paneView.Bounds, Color.White); // bg
+
+				Vector2 ppos = paneSize * 0.5f;
+				if (paneContents.GetSize(paneSize).Y % 2 != paneSize.Y % 2) ppos += new Vector2(0f, 0.5f); // 1x1 pixel position, vertical
+
+				paneContents.Draw(spriteBatch, paneSize * 0.5f, paneSize);
+
+				spriteBatch.End();
+
+				spriteBatch.GraphicsDevice.SetRenderTarget(null);
+			}
+			#endregion
+
+			#region Main gallery draw
+			spriteBatch.GraphicsDevice.Clear(Color.Black);
 
 			spriteBatch.Begin();//SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.AnisotropicClamp, DepthStencilState.Default, RasterizerState.CullNone);
 			//spriteBatch.Draw(imgCurrent, Vector2.Zero, Color.White);
 
 			if (enableBackground) spriteBatch.Draw(txBG, Window.ClientBounds, Color.White); // bg
 
-			PrevEntry2.Draw(spriteBatch, drawOrigin - new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + PrevEntry.GetSize(screenSize).X + PrevEntry2.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor2);
-			NextEntry2.Draw(spriteBatch, drawOrigin + new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + NextEntry.GetSize(screenSize).X + NextEntry2.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor2);
+			PrevEntry2.Draw(spriteBatch, drawOrigin - new Vector2(CurrentEntry.GetSize(viewSize).X * 0.5f + PrevEntry.GetSize(viewSize).X + PrevEntry2.GetSize(viewSize).X * 0.5f, 0), viewSize, fadeColor2);
+			NextEntry2.Draw(spriteBatch, drawOrigin + new Vector2(CurrentEntry.GetSize(viewSize).X * 0.5f + NextEntry.GetSize(viewSize).X + NextEntry2.GetSize(viewSize).X * 0.5f, 0), viewSize, fadeColor2);
 
-			PrevEntry.Draw(spriteBatch, drawOrigin - new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + PrevEntry.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor);
-			NextEntry.Draw(spriteBatch, drawOrigin + new Vector2(CurrentEntry.GetSize(screenSize).X * 0.5f + NextEntry.GetSize(screenSize).X * 0.5f, 0), screenSize, fadeColor);
+			PrevEntry.Draw(spriteBatch, drawOrigin - new Vector2(CurrentEntry.GetSize(viewSize).X * 0.5f + PrevEntry.GetSize(viewSize).X * 0.5f, 0), viewSize, fadeColor);
+			NextEntry.Draw(spriteBatch, drawOrigin + new Vector2(CurrentEntry.GetSize(viewSize).X * 0.5f + NextEntry.GetSize(viewSize).X * 0.5f, 0), viewSize, fadeColor);
 
 			Vector2 parity = Vector2.Zero;
-			if (ces.Y % 2 != screenSize.Y % 2) parity += new Vector2(0f, 0.5f); // enforce clarity on dimensions not matching parity
-			CurrentEntry.Draw(spriteBatch, drawOrigin + parity, screenSize);
+			if (ces.Y % 2 != viewSize.Y % 2) parity += new Vector2(0f, 0.5f); // enforce clarity on dimensions not matching parity
+			CurrentEntry.Draw(spriteBatch, drawOrigin + parity, viewSize);
 
-			// test: view circle
-			//spriteBatch.Draw(txCircle, screenCenter, null, Color.White, 0f, Vector2.One * 256f, 1f, SpriteEffects.None, 0f);
+			if (paneScroll != 0f)
+			{
+				float psw = paneSize.X * paneScroll * -1f;
+				// right
+				if (psw > 0)
+					spriteBatch.Draw(paneView, new Vector2(screenSize.X - psw, screenSize.Y / 2f), null, Color.White, 0f, new Vector2(0, paneSize.Y / 2f), 1f, SpriteEffects.None, 0f);
+				
+				// left
+				if (psw < 0)
+					spriteBatch.Draw(paneView, new Vector2(-psw, screenSize.Y / 2f), null, Color.White, 0f, new Vector2(paneSize.X, paneSize.Y / 2f), 1f, SpriteEffects.None, 0f);
+			}
 
 			spriteBatch.End();
+			#endregion
 		}
 
 		void GoPrev()
@@ -248,15 +342,15 @@ namespace Stellariview
 
 		void Shuffle()
 		{
-			TextureHolder current = CurrentEntry;
+			ImageContainer current = CurrentEntry;
 
 			if (entriesCurrent != entriesOriginal) entriesCurrent = entriesOriginal;
 			else
 			{
 				Random rand = new Random();
 
-				entriesCurrent = new List<TextureHolder>();
-				foreach (TextureHolder entry in entriesOriginal)
+				entriesCurrent = new List<ImageContainer>();
+				foreach (ImageContainer entry in entriesOriginal)
 				{
 					entriesCurrent.Insert(rand.Next(entriesCurrent.Count), entry);
 				}
