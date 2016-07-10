@@ -92,6 +92,7 @@ namespace Stellariview
             Window.ClientSizeChanged += (Object s, EventArgs e) => { redraw = true; }; // force redraw on resize
 		}
 
+        bool DoRedraw { get { redraw = true; return true; } } // silly hack because I can :D
 		void AppUpdate(GameTime gameTime)
 		{
 			if (entriesCurrent.Count == 0)
@@ -133,10 +134,10 @@ namespace Stellariview
 				if (Input.KeyPressed(Keys.F11)) ToggleFullscreen();
 
 				if (Input.KeyPressed(Keys.A)) enableUIAnimations = !enableUIAnimations;
-				if (Input.KeyPressed(Keys.B)) enableBackground = !enableBackground;
+                if (Input.KeyPressed(Keys.B) && DoRedraw) enableBackground = !enableBackground;
 
-				if (Input.KeyPressed(Keys.S)) Shuffle();
-				if (Input.KeyPressed(Keys.F)) fadeLevel = (fadeLevel + 1) % fadeLevels.Length;
+                if (Input.KeyPressed(Keys.S) && DoRedraw) Shuffle();
+                if (Input.KeyPressed(Keys.F) && DoRedraw) fadeLevel = (fadeLevel + 1) % fadeLevels.Length;
 
 				if (Input.KeyPressed(Keys.P) || (ctrl && Input.KeyPressed(Keys.Tab)))
 				{
@@ -146,6 +147,7 @@ namespace Stellariview
 					dirty = true;
 
 					if (panePosition == 0) panePosition = -1; // pop up if not up already
+                    redraw = true;
 				}
 				if (Input.KeyPressed(Keys.Tab) && !ctrl)
 				{
