@@ -135,7 +135,7 @@ namespace Stellariview
 				if (Input.KeyPressed(Keys.S)) Shuffle();
 				if (Input.KeyPressed(Keys.F)) fadeLevel = (fadeLevel + 1) % fadeLevels.Length;
 
-				if (Input.KeyPressed(Keys.P))
+				if (Input.KeyPressed(Keys.P) || (ctrl && Input.KeyPressed(Keys.Tab)))
 				{
 					ImageContainer cache = paneContents;
 					paneContents = CurrentEntry;
@@ -144,7 +144,7 @@ namespace Stellariview
 
 					if (panePosition == 0) panePosition = -1; // pop up if not up already
 				}
-				if (Input.KeyPressed(Keys.Tab))
+				if (Input.KeyPressed(Keys.Tab) && !ctrl)
 				{
 					if (paneContents == null) paneContents = CurrentEntry;
 
