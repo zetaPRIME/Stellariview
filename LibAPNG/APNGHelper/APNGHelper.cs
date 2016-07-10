@@ -202,6 +202,9 @@ namespace LibAPNG.XNAHelper
 
             // Okay it's all over now
             game.GraphicsDevice.SetRenderTarget(null);
+
+            // edit: prod this so the screen doesn't go black
+            Stellariview.Core.redraw = true;
         }
 
         #endregion Methods

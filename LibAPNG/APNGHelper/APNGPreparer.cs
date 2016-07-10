@@ -170,6 +170,8 @@ namespace LibAPNG.XNAHelper
 			}
 
 			sb.GraphicsDevice.SetRenderTarget(null);
+            // prod the core to redraw
+            Stellariview.Core.redraw = true;
 
 			if (framesPrepared == numFrames)
 			{

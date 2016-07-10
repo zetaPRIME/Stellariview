@@ -62,6 +62,10 @@ namespace Stellariview
 			IsFixedTimeStep = false;
 			TargetElapsedTime = TimeSpan.FromSeconds(1f / 60f);
 
+            graphics.PreparingDeviceSettings += (Object s, PreparingDeviceSettingsEventArgs a) => {
+                a.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.PreserveContents;
+            };
+
 			graphics.PreferMultiSampling = true;
 			graphics.PreferredBackBufferWidth = 854;
 			graphics.PreferredBackBufferHeight = 480;

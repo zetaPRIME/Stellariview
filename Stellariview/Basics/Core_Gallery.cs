@@ -56,6 +56,7 @@ namespace Stellariview
 		bool enableBackground = true;
 
 		bool dirty = true;
+        public static bool redraw = true;
 
 		public static Texture2D txBG, txCircle;
 
@@ -87,6 +88,8 @@ namespace Stellariview
 			paneView = new RenderTarget2D(spriteBatch.GraphicsDevice, Window.ClientBounds.Width / 2, Window.ClientBounds.Height);
 
 			ImageContainer.StartLoadThread();
+
+            Window.ClientSizeChanged += (Object s, EventArgs e) => { redraw = true; }; // force redraw on resize
 		}
 
 		void AppUpdate(GameTime gameTime)
@@ -183,8 +186,20 @@ namespace Stellariview
 			}
 		}
 
+        bool StateForcesRedraw(ImageContainer ct) {
+            return ct.animation != null || ct.state == ImageContainer.TextureState.Loading || ct.state == ImageContainer.TextureState.Preparing;
+        }
+
 		void AppDraw(GameTime gameTime)
 		{
+            if (switchScrollScale != 0) redraw = true;
+            else if (paneScroll != panePosition) redraw = true;
+            else if (StateForcesRedraw(CurrentEntry) || StateForcesRedraw(PrevEntry) || StateForcesRedraw(NextEntry)
+                || StateForcesRedraw(PrevEntry2) || StateForcesRedraw(NextEntry2)) redraw = true;
+            if (!redraw) return;
+            redraw = false;
+
+
 			if (entriesCurrent.Count == 0)
 			{
 				spriteBatch.GraphicsDevice.Clear(new Color(0.25f, 0f, 0f));

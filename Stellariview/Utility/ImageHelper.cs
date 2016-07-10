@@ -69,6 +69,7 @@ namespace Stellariview
 
 			//Release the GPU back to drawing to the screen
 			GraphicsDevice.SetRenderTarget(null);
+            Core.redraw = true;
 
 			return result as Texture2D;
 		}
