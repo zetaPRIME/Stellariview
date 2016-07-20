@@ -164,8 +164,24 @@ namespace Stellariview
 					}
 				}
 
-				if (Input.KeyPressed(Keys.Left) || Input.KeyPressed(Keys.Z)) { GoPrev(); }
-				if (Input.KeyPressed(Keys.Right) || Input.KeyPressed(Keys.X)) { GoNext(); }
+				if (Input.KeyPressed(Keys.Left) || Input.KeyPressed(Keys.Z)) { 
+                    if (!shift || entriesCurrent == entriesOriginal) GoPrev();
+                    else {
+                        int fid = entriesOriginal.IndexOf(entriesCurrent[currentEntryId]);
+                        currentEntryId = entriesCurrent.IndexOf(entriesOriginal[WrapIndex(fid - 1)]);
+
+                        dirty = DoRedraw;
+                    }
+                }
+				if (Input.KeyPressed(Keys.Right) || Input.KeyPressed(Keys.X)) {
+                    if (!shift || entriesCurrent == entriesOriginal) GoNext();
+                    else {
+                        int fid = entriesOriginal.IndexOf(entriesCurrent[currentEntryId]);
+                        currentEntryId = entriesCurrent.IndexOf(entriesOriginal[WrapIndex(fid + 1)]);
+
+                        dirty = DoRedraw;
+                    }
+                }
 			}
 			#endregion
 
