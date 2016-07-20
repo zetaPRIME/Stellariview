@@ -109,9 +109,12 @@ namespace Stellariview
 				{
 					fs.CopyTo(ms);
 					ms.Position = 0;
-					APNG apng = new APNG(ms.ReadBytes((int)ms.Length));
+                    byte[] bytes = ms.ReadBytes((int)ms.Length);
+                    APNG apng = null;
+                    try { apng = new APNG(bytes); }
+                    catch (Exception e) { } // gulp apng load error and load as simple png
 
-					if (apng.IsSimplePNG) frames.Add(new AnimFrame(ImageHelper.LoadFromStream((ms))));
+					if (apng == null || apng.IsSimplePNG) frames.Add(new AnimFrame(ImageHelper.LoadFromStream((ms))));
 					else
 					{
 						loop = apng.acTLChunk.NumPlays < 1;

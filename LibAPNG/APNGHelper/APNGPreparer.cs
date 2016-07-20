@@ -25,7 +25,8 @@ namespace LibAPNG.XNAHelper
 		{
 			this.apng = apng;
 
-			frameList = new List<Frame>(apng.Frames);
+            if (apng == null) frameList = new List<Frame>();
+            else frameList = new List<Frame>(apng.Frames);
 			numFrames = frameList.Count;
 
 			// load raw component frames IN THE LOAD THREAD YOU IDIOT
