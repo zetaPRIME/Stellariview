@@ -19,7 +19,7 @@ namespace Stellariview
 		static string keyBufferComplete = "";
 		public static string KeyBuffer { get { return keyBufferComplete; } }
 
-		public static Settings padSettings;
+		//public static Settings padSettings;
 
 		public static MouseState mouseStateNow;
 		public static MouseState mouseStateLast;
@@ -30,11 +30,11 @@ namespace Stellariview
 		public static void Init()
 		{
 			// for some stupid reason you need to bash reflection against MonoGame if you want to configure controllers
-			Type gpt = typeof(GamePad);
+			/*Type gpt = typeof(GamePad);
 			MethodInfo minfo = gpt.GetMethod("PrepSettings", BindingFlags.NonPublic | BindingFlags.Static);
 			minfo.Invoke(null, new object[] { });
 			FieldInfo finfo = gpt.GetField("settings", BindingFlags.NonPublic | BindingFlags.Static);
-			padSettings = finfo.GetValue(null) as Settings;
+			padSettings = finfo.GetValue(null) as Settings;*/
 
 		}
 

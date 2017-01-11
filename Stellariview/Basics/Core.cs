@@ -49,7 +49,8 @@ namespace Stellariview
 		public Core()
 		{
 			graphics = new GraphicsDeviceManager(this);
-			Content.RootDirectory = "Content/Native";
+            graphics.HardwareModeSwitch = false;
+            Content.RootDirectory = "Content/Native";
 		}
 
 		protected override void Initialize()
@@ -170,17 +171,22 @@ namespace Stellariview
 		bool assertWindowSize = false;
 		void ToggleFullscreen()
 		{
-			bool isFullScreen = graphics.IsFullScreen;
+			bool isFullScreen = Window.IsBorderless;
 
-			DisplayMode dispMode = graphics.GraphicsDevice.Adapter.CurrentDisplayMode;
+			//DisplayMode dispMode = graphics.GraphicsDevice.Adapter.CurrentDisplayMode;
 
 			if (!isFullScreen)
 			{
+                System.Windows.Forms.Screen scr = System.Windows.Forms.Screen.FromPoint(new System.Drawing.Point(this.Window.ClientBounds.Center.X, this.Window.ClientBounds.Center.Y));
+                
 				boundsBeforeFullscreen = Window.ClientBounds;
-				graphics.PreferredBackBufferWidth = dispMode.Width;
-				graphics.PreferredBackBufferHeight = dispMode.Height;
-				graphics.ToggleFullScreen();
+                graphics.PreferredBackBufferWidth = scr.Bounds.Width;// dispMode.Width;
+                graphics.PreferredBackBufferHeight = scr.Bounds.Height;// dispMode.Height;
+                Window.IsBorderless = true;
+				//graphics.ToggleFullScreen();
 				graphics.ApplyChanges();
+
+                Window.Position = new Point(scr.Bounds.X, scr.Bounds.Y);
 
 				IsMouseVisible = false;
 			}
@@ -188,8 +194,10 @@ namespace Stellariview
 			{
 				graphics.PreferredBackBufferWidth = boundsBeforeFullscreen.Width;
 				graphics.PreferredBackBufferHeight = boundsBeforeFullscreen.Height;
-				graphics.ToggleFullScreen();
+                Window.IsBorderless = false;
+                //graphics.ToggleFullScreen();
 				graphics.ApplyChanges();
+                Window.Position = new Point(boundsBeforeFullscreen.X, boundsBeforeFullscreen.Y);
 
 				IsMouseVisible = true;
 
@@ -198,13 +206,15 @@ namespace Stellariview
 			}
 		}
 
-		void SetWindowSize(int width, int height)
+		void SetWindowSize(int width, int height, bool fullScreen = false)
 		{
-			Type otkgw = typeof(OpenTKGameWindow);
+            this.Window.BeginScreenDeviceChange(fullScreen);
+            this.Window.EndScreenDeviceChange("", width, height);
+			/*Type otkgw = typeof(OpenTKGameWindow);
 			FieldInfo wfield = otkgw.GetField("window", BindingFlags.NonPublic | BindingFlags.Instance);
 			OpenTK.GameWindow wnd = (OpenTK.GameWindow)wfield.GetValue(Core.instance.Window);
 
-			wnd.Width = width; wnd.Height = height;
+			wnd.Width = width; wnd.Height = height;*/
 		}
 	}
 }
