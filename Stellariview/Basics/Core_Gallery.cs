@@ -300,7 +300,7 @@ namespace Stellariview
 			spriteBatch.Begin();//SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.AnisotropicClamp, DepthStencilState.Default, RasterizerState.CullNone);
 			//spriteBatch.Draw(imgCurrent, Vector2.Zero, Color.White);
 
-			if (enableBackground) spriteBatch.Draw(txBG, Window.ClientBounds, Color.White); // bg
+			if (enableBackground) spriteBatch.Draw(txBG, new Rectangle(Point.Zero, Window.ClientBounds.Size), Color.White); // bg
 
 			PrevEntry2.Draw(spriteBatch, drawOrigin - new Vector2(CurrentEntry.GetSize(viewSize).X * 0.5f + PrevEntry.GetSize(viewSize).X + PrevEntry2.GetSize(viewSize).X * 0.5f, 0), viewSize, fadeColor2);
 			NextEntry2.Draw(spriteBatch, drawOrigin + new Vector2(CurrentEntry.GetSize(viewSize).X * 0.5f + NextEntry.GetSize(viewSize).X + NextEntry2.GetSize(viewSize).X * 0.5f, 0), viewSize, fadeColor2);
