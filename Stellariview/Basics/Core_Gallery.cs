@@ -212,8 +212,8 @@ namespace Stellariview
 		{
             if (switchScrollScale != 0) redraw = true;
             else if (paneScroll != panePosition) redraw = true;
-            else if (StateForcesRedraw(CurrentEntry) || StateForcesRedraw(PrevEntry) || StateForcesRedraw(NextEntry)
-                || StateForcesRedraw(PrevEntry2) || StateForcesRedraw(NextEntry2)) redraw = true;
+            else if (entriesCurrent.Count > 0 && (StateForcesRedraw(CurrentEntry) || StateForcesRedraw(PrevEntry) || StateForcesRedraw(NextEntry)
+                || StateForcesRedraw(PrevEntry2) || StateForcesRedraw(NextEntry2))) redraw = true;
             if (!redraw) return;
             redraw = false;
 
@@ -269,11 +269,11 @@ namespace Stellariview
 			if (ces.X % 2 != viewSize.X % 2) drawOrigin += new Vector2(0.5f, 0f); // enforce clarity on dimensions not matching parity
 
 			#region Pane rendertarget
-			if (paneContents != null)
+			if (paneContents != null && paneSize.X > 0 && paneSize.Y > 0)
 			{
 				if (paneView.Width != (int)paneSize.X || paneView.Height != (int)paneSize.Y)
 				{
-					paneView = new RenderTarget2D(spriteBatch.GraphicsDevice, (int)paneSize.X, (int)paneSize.Y);
+                    paneView = new RenderTarget2D(spriteBatch.GraphicsDevice, (int)paneSize.X, (int)paneSize.Y);
 				}
 
 				spriteBatch.GraphicsDevice.SetRenderTarget(paneView);
