@@ -17,12 +17,10 @@ using Microsoft.Xna.Framework.Media;
 
 using Path = Fluent.IO.Path;
 
-namespace Stellariview
-{
+namespace Stellariview {
     //
 
-    public partial class Core : Game
-    {
+    public partial class Core : Game {
         string[] supportedTypes = new[] { ".png", ".jpg", ".gif" };
 
         public static Path startingPath;
@@ -32,8 +30,7 @@ namespace Stellariview
         List<ImageContainer> entriesCurrent;
         int currentEntryId = 0;
         int lastFrameEntryId = 0;
-        ImageContainer CurrentEntry
-        {
+        ImageContainer CurrentEntry {
             get { return entriesCurrent[currentEntryId]; }
             set { currentEntryId = entriesCurrent.IndexOf(value); }
         }
@@ -60,8 +57,7 @@ namespace Stellariview
 
         public static Texture2D txBG, txCircle;
 
-        void AppInit()
-        {
+        void AppInit() {
             // build list
             if (startingPath.IsDirectory) directory = startingPath;
             else directory = startingPath.Up();
@@ -93,10 +89,8 @@ namespace Stellariview
         }
 
         bool DoRedraw { get { redraw = true; return true; } } // silly hack because I can :D
-        void AppUpdate(GameTime gameTime)
-        {
-            if (entriesCurrent.Count == 0)
-            {
+        void AppUpdate(GameTime gameTime) {
+            if (entriesCurrent.Count == 0) {
                 Window.Title = "Stellariview - No images present!";
 
                 if (Input.KeyPressed(Keys.Escape)) Exit();
@@ -104,8 +98,7 @@ namespace Stellariview
                 return;
             }
 
-            if (lastFrameEntryId != currentEntryId)
-            {
+            if (lastFrameEntryId != currentEntryId) {
                 //entriesCurrent[lastFrameEntryId].Unload();
             }
             lastFrameEntryId = currentEntryId;
@@ -115,18 +108,14 @@ namespace Stellariview
             bool ctrl = (Input.KeyHeld(Keys.LeftControl) || Input.KeyHeld(Keys.RightControl));
             bool shift = (Input.KeyHeld(Keys.LeftShift) || Input.KeyHeld(Keys.RightShift));
 
-            if (alt)
-            {
-                if (Input.KeyPressed(Keys.Enter))
-                {
+            if (alt) {
+                if (Input.KeyPressed(Keys.Enter)) {
                     //Window.IsBorderless = !Window.IsBorderless;
                     ToggleFullscreen();
                 }
             }
-            else
-            {
-                if (Input.KeyPressed(Keys.Escape))
-                {
+            else {
+                if (Input.KeyPressed(Keys.Escape)) {
                     if (graphics.IsFullScreen) ToggleFullscreen();
                     else Exit();
                 }
@@ -139,8 +128,7 @@ namespace Stellariview
                 if (Input.KeyPressed(Keys.S) && DoRedraw) Shuffle();
                 if (Input.KeyPressed(Keys.F) && DoRedraw) fadeLevel = (fadeLevel + 1) % fadeLevels.Length;
 
-                if (Input.KeyPressed(Keys.P) || (ctrl && Input.KeyPressed(Keys.Tab)))
-                {
+                if (Input.KeyPressed(Keys.P) || (ctrl && Input.KeyPressed(Keys.Tab))) {
                     ImageContainer cache = paneContents;
                     paneContents = CurrentEntry;
                     if (shift && cache != null) CurrentEntry = cache;
@@ -149,37 +137,31 @@ namespace Stellariview
                     if (panePosition == 0) panePosition = -1; // pop up if not up already
                     redraw = true;
                 }
-                if (Input.KeyPressed(Keys.Tab) && !ctrl)
-                {
+                if (Input.KeyPressed(Keys.Tab) && !ctrl) {
                     if (paneContents == null) paneContents = CurrentEntry;
 
                     int tgt = -1;
                     if (shift) tgt = 1;
 
                     if (panePosition == tgt) panePosition = 0;
-                    else
-                    {
+                    else {
                         panePosition = tgt;
                         paneContents.Load();
                     }
                 }
 
-                if (Input.KeyPressed(Keys.Left) || Input.KeyPressed(Keys.Z))
-                {
+                if (Input.KeyPressed(Keys.Left) || Input.KeyPressed(Keys.Z)) {
                     if (!shift || entriesCurrent == entriesOriginal) GoPrev();
-                    else
-                    {
+                    else {
                         int fid = entriesOriginal.IndexOf(entriesCurrent[currentEntryId]);
                         currentEntryId = entriesCurrent.IndexOf(entriesOriginal[WrapIndex(fid - 1)]);
 
                         dirty = DoRedraw;
                     }
                 }
-                if (Input.KeyPressed(Keys.Right) || Input.KeyPressed(Keys.X))
-                {
+                if (Input.KeyPressed(Keys.Right) || Input.KeyPressed(Keys.X)) {
                     if (!shift || entriesCurrent == entriesOriginal) GoNext();
-                    else
-                    {
+                    else {
                         int fid = entriesOriginal.IndexOf(entriesCurrent[currentEntryId]);
                         currentEntryId = entriesCurrent.IndexOf(entriesOriginal[WrapIndex(fid + 1)]);
 
@@ -189,8 +171,7 @@ namespace Stellariview
             }
             #endregion
 
-            if (dirty)
-            {
+            if (dirty) {
                 ImageContainer.pauseLoad = true;
                 entriesCurrent[WrapIndex(currentEntryId - 2)].Load();
                 entriesCurrent[WrapIndex(currentEntryId + 2)].Load();
@@ -208,13 +189,11 @@ namespace Stellariview
             }
         }
 
-        bool StateForcesRedraw(ImageContainer ct)
-        {
+        bool StateForcesRedraw(ImageContainer ct) {
             return ct.animation != null || ct.state == ImageContainer.TextureState.Loading || ct.state == ImageContainer.TextureState.Preparing;
         }
 
-        void AppDraw(GameTime gameTime)
-        {
+        void AppDraw(GameTime gameTime) {
             if (switchScrollScale != 0) redraw = true;
             else if (paneScroll != panePosition) redraw = true;
             else if (entriesCurrent.Count > 0 && (StateForcesRedraw(CurrentEntry) || StateForcesRedraw(PrevEntry) || StateForcesRedraw(NextEntry)
@@ -223,8 +202,7 @@ namespace Stellariview
             redraw = false;
 
 
-            if (entriesCurrent.Count == 0)
-            {
+            if (entriesCurrent.Count == 0) {
                 spriteBatch.GraphicsDevice.Clear(new Color(0.25f, 0f, 0f));
                 return;
             }
@@ -236,16 +214,13 @@ namespace Stellariview
             // set up pane position
             if (paneContents == null) paneScroll = panePosition = 0;
             else if (!enableUIAnimations) paneScroll = panePosition;
-            else
-            {
+            else {
                 float scSpeed = deltaTimeDraw * ((9.5f * Math.Abs(paneScroll - panePosition)) + 0.5f);
-                if (paneScroll < panePosition)
-                {
+                if (paneScroll < panePosition) {
                     paneScroll += scSpeed;
                     if (paneScroll > panePosition) paneScroll = panePosition;
                 }
-                else if (paneScroll > panePosition)
-                {
+                else if (paneScroll > panePosition) {
                     paneScroll -= scSpeed;
                     if (paneScroll < panePosition) paneScroll = panePosition;
                 }
@@ -274,10 +249,8 @@ namespace Stellariview
             if (ces.X % 2 != viewSize.X % 2) drawOrigin += new Vector2(0.5f, 0f); // enforce clarity on dimensions not matching parity
 
             #region Pane rendertarget
-            if (paneContents != null && paneSize.X > 0 && paneSize.Y > 0)
-            {
-                if (paneView.Width != (int)paneSize.X || paneView.Height != (int)paneSize.Y)
-                {
+            if (paneContents != null && paneSize.X > 0 && paneSize.Y > 0) {
+                if (paneView.Width != (int)paneSize.X || paneView.Height != (int)paneSize.Y) {
                     paneView = new RenderTarget2D(spriteBatch.GraphicsDevice, (int)paneSize.X, (int)paneSize.Y);
                 }
 
@@ -317,8 +290,7 @@ namespace Stellariview
             if (ces.Y % 2 != viewSize.Y % 2) parity += new Vector2(0f, 0.5f); // enforce clarity on dimensions not matching parity
             CurrentEntry.Draw(spriteBatch, drawOrigin + parity, viewSize);
 
-            if (paneScroll != 0f)
-            {
+            if (paneScroll != 0f) {
                 float psw = paneSize.X * paneScroll * -1f;
                 // right
                 if (psw > 0)
@@ -333,8 +305,7 @@ namespace Stellariview
             #endregion
         }
 
-        void GoPrev()
-        {
+        void GoPrev() {
             Vector2 screenSize = new Vector2(Window.ClientBounds.Width, Window.ClientBounds.Height);
 
             float curScrollPos = switchScrollPos * switchScrollScale;
@@ -344,8 +315,7 @@ namespace Stellariview
             currentEntryId = WrapIndex(currentEntryId - 1);
             dirty = true;
         }
-        void GoNext()
-        {
+        void GoNext() {
             Vector2 screenSize = new Vector2(Window.ClientBounds.Width, Window.ClientBounds.Height);
 
             float curScrollPos = switchScrollPos * switchScrollScale;
@@ -355,15 +325,12 @@ namespace Stellariview
             currentEntryId = WrapIndex(currentEntryId + 1);
             dirty = true;
         }
-        void SwitchScroll(Vector2 screenSize)
-        {
+        void SwitchScroll(Vector2 screenSize) {
             switchScrollPos = Math.Max(-screenSize.X, Math.Min(switchScrollPos, screenSize.X)); // clamp to reasonable value so the screen doesn't get left behind
             switchScrollScale = 1f;
 
-            if (switchScrollPos != 0)
-            {
-                while (Math.Abs(switchScrollPos) < 128)
-                {
+            if (switchScrollPos != 0) {
+                while (Math.Abs(switchScrollPos) < 128) {
                     switchScrollPos *= 2f;
                     switchScrollScale /= 2f;
                 }
@@ -371,25 +338,21 @@ namespace Stellariview
         }
 
         void WrapIndex() { currentEntryId = WrapIndex(currentEntryId); }
-        int WrapIndex(int index)
-        {
+        int WrapIndex(int index) {
             while (index < 0) index += entriesCurrent.Count;
             while (index >= entriesCurrent.Count) index -= entriesCurrent.Count;
             return index;
         }
 
-        void Shuffle()
-        {
+        void Shuffle() {
             ImageContainer current = CurrentEntry;
 
             if (entriesCurrent != entriesOriginal) entriesCurrent = entriesOriginal;
-            else
-            {
+            else {
                 Random rand = new Random();
 
                 entriesCurrent = new List<ImageContainer>();
-                foreach (ImageContainer entry in entriesOriginal)
-                {
+                foreach (ImageContainer entry in entriesOriginal) {
                     entriesCurrent.Insert(rand.Next(entriesCurrent.Count), entry);
                 }
             }

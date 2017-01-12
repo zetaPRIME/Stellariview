@@ -14,12 +14,10 @@ using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
 
-namespace Stellariview
-{
+namespace Stellariview {
     //
 
-    public partial class Core : Game
-    {
+    public partial class Core : Game {
         public static Core instance;
         //public static EngineMode mode = EngineMode.Game;
         public static SpriteBatch spriteBatch;
@@ -46,15 +44,13 @@ namespace Stellariview
 
         public DateTime initStart;
 
-        public Core()
-        {
+        public Core() {
             graphics = new GraphicsDeviceManager(this);
             graphics.HardwareModeSwitch = false;
             Content.RootDirectory = "Content/Native";
         }
 
-        protected override void Initialize()
-        {
+        protected override void Initialize() {
             initStart = DateTime.Now;
 
             573.ToString(); // because why not
@@ -63,8 +59,7 @@ namespace Stellariview
             IsFixedTimeStep = false;
             TargetElapsedTime = TimeSpan.FromSeconds(1f / 60f);
 
-            graphics.PreparingDeviceSettings += (Object s, PreparingDeviceSettingsEventArgs a) =>
-            {
+            graphics.PreparingDeviceSettings += (Object s, PreparingDeviceSettingsEventArgs a) => {
                 a.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.PreserveContents;
             };
 
@@ -83,8 +78,7 @@ namespace Stellariview
             base.Initialize();
         }
 
-        protected override void LoadContent()
-        {
+        protected override void LoadContent() {
             spriteBatch = new SpriteBatch(graphics.GraphicsDevice);
 
             //fontDebug = Content.Load<SpriteFont>("DebugFont");
@@ -96,10 +90,8 @@ namespace Stellariview
         }
 
         bool init = false;
-        protected override void Update(GameTime gameTime)
-        {
-            if (!init)
-            {
+        protected override void Update(GameTime gameTime) {
+            if (!init) {
                 //GameState.SetGameSize((int)GameDef.screenSize.X, (int)GameDef.screenSize.Y);
 
                 AppInit();
@@ -110,8 +102,7 @@ namespace Stellariview
             }
             //Console.WriteLine("Resolution is " + Window.ClientBounds.Width + "x" + Window.ClientBounds.Height);
 
-            if (assertWindowSize)
-            {
+            if (assertWindowSize) {
                 SetWindowSize(boundsBeforeFullscreen.Width, boundsBeforeFullscreen.Height);
                 assertWindowSize = false;
             }
@@ -123,8 +114,7 @@ namespace Stellariview
             base.Update(gameTime);
         }
 
-        protected override void Draw(GameTime gameTime)
-        {
+        protected override void Draw(GameTime gameTime) {
             float prevFrameTime = frameTimeTotal;
             float thisFrameTime = (float)gameTime.TotalGameTime.TotalSeconds;
             //if (thisFrameTime - prevFrameTime < 1f / 60f) return; // don't need more than 60fps
@@ -136,8 +126,7 @@ namespace Stellariview
             frameTime = gameTime;
             frameTimeTotal = thisFrameTime;
 
-            lock (gfxLock)
-            {
+            lock (gfxLock) {
                 ImageContainer.ProcessConvertQueue();
 
                 spriteBatch.GraphicsDevice.SetRenderTarget(null);
@@ -148,18 +137,15 @@ namespace Stellariview
             }
         }
 
-        internal void PrepareTarget()
-        {
-            if (screenTarget == null || screenTarget.Bounds != Window.ClientBounds)
-            {
+        internal void PrepareTarget() {
+            if (screenTarget == null || screenTarget.Bounds != Window.ClientBounds) {
                 screenTarget = new RenderTarget2D(GraphicsDevice, Window.ClientBounds.Width, Window.ClientBounds.Height, false,
                     GraphicsDevice.PresentationParameters.BackBufferFormat, GraphicsDevice.PresentationParameters.DepthStencilFormat, 0, RenderTargetUsage.PreserveContents);
             }
             GraphicsDevice.SetRenderTarget(screenTarget);
         }
 
-        internal void BakeToScreen()
-        {
+        internal void BakeToScreen() {
             spriteBatch.End();
             spriteBatch.GraphicsDevice.SetRenderTarget(null);
             spriteBatch.Begin();
@@ -170,14 +156,12 @@ namespace Stellariview
 
         Rectangle boundsBeforeFullscreen;
         bool assertWindowSize = false;
-        void ToggleFullscreen()
-        {
+        void ToggleFullscreen() {
             bool isFullScreen = Window.IsBorderless;
 
             //DisplayMode dispMode = graphics.GraphicsDevice.Adapter.CurrentDisplayMode;
 
-            if (!isFullScreen)
-            {
+            if (!isFullScreen) {
                 System.Windows.Forms.Screen scr = System.Windows.Forms.Screen.FromPoint(new System.Drawing.Point(this.Window.ClientBounds.Center.X, this.Window.ClientBounds.Center.Y));
 
                 boundsBeforeFullscreen = Window.ClientBounds;
@@ -191,8 +175,7 @@ namespace Stellariview
 
                 IsMouseVisible = false;
             }
-            else
-            {
+            else {
                 graphics.PreferredBackBufferWidth = boundsBeforeFullscreen.Width;
                 graphics.PreferredBackBufferHeight = boundsBeforeFullscreen.Height;
                 Window.IsBorderless = false;
@@ -207,8 +190,7 @@ namespace Stellariview
             }
         }
 
-        void SetWindowSize(int width, int height, bool fullScreen = false)
-        {
+        void SetWindowSize(int width, int height, bool fullScreen = false) {
             this.Window.BeginScreenDeviceChange(fullScreen);
             this.Window.EndScreenDeviceChange("", width, height);
             /*Type otkgw = typeof(OpenTKGameWindow);

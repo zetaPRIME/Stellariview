@@ -22,12 +22,9 @@ using Path = Fluent.IO.Path;
 using Color = Microsoft.Xna.Framework.Color;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
-namespace Stellariview
-{
-    public static class ImageHelper
-    {
-        public static Texture2D ConvertToPreMultipliedAlphaGPU(Texture2D texture)
-        {
+namespace Stellariview {
+    public static class ImageHelper {
+        public static Texture2D ConvertToPreMultipliedAlphaGPU(Texture2D texture) {
             // code borrowed from http://jakepoz.com/jake_poznanski__speeding_up_xna.html
 
             GraphicsDevice GraphicsDevice = Core.spriteBatch.GraphicsDevice;
@@ -74,8 +71,7 @@ namespace Stellariview
             return result as Texture2D;
         }
 
-        public static Texture2D MakeGradient(int width, int height, Color first, Color second)
-        {
+        public static Texture2D MakeGradient(int width, int height, Color first, Color second) {
             SpriteBatch sb = Core.spriteBatch;
             RenderTarget2D res = new RenderTarget2D(sb.GraphicsDevice, width, height);
 
@@ -88,8 +84,7 @@ namespace Stellariview
             sb.GraphicsDevice.Clear(Color.Transparent);
 
             sb.Begin();
-            for (int i = 0; i < height; i++)
-            {
+            for (int i = 0; i < height; i++) {
                 float p = (float)i / (float)height;
                 sb.Draw(txPixel, new Rectangle(0, i, width, 1), new Color(vSecond * p + vFirst * (1f - p)));
             }
@@ -100,8 +95,7 @@ namespace Stellariview
             return res;
         }
 
-        public static Texture2D MakeCircle(int size)
-        {
+        public static Texture2D MakeCircle(int size) {
             SpriteBatch sb = Core.spriteBatch;
             RenderTarget2D res = new RenderTarget2D(sb.GraphicsDevice, size, size);
 
@@ -111,8 +105,7 @@ namespace Stellariview
             sb.GraphicsDevice.Clear(Color.Transparent);
 
             sb.Begin();
-            for (int i = 0; i < size; i++)
-            {
+            for (int i = 0; i < size; i++) {
                 float p = (float)i / (float)size;
                 float t = Math.Abs(0.5f - p);
                 float ts = t * 2;
@@ -130,8 +123,7 @@ namespace Stellariview
 
             return res;
         }
-        public static Texture2D Fuzz(Texture2D inp, int proportion)
-        {
+        public static Texture2D Fuzz(Texture2D inp, int proportion) {
             SpriteBatch sb = Core.spriteBatch;
             RenderTarget2D res = new RenderTarget2D(sb.GraphicsDevice, inp.Width / proportion, inp.Height / proportion);
 
@@ -157,38 +149,30 @@ namespace Stellariview
             return res;
         }
 
-        public static Texture2D LoadFromStream(FileStream fs)
-        {
+        public static Texture2D LoadFromStream(FileStream fs) {
             Texture2D res = null;
-            using (MemoryStream ms = new MemoryStream())
-            {
+            using (MemoryStream ms = new MemoryStream()) {
                 fs.CopyTo(ms);
                 res = LoadFromStream(ms);
             }
             return res;
         }
-        public static Texture2D LoadFromStream(MemoryStream ms)
-        {
+        public static Texture2D LoadFromStream(MemoryStream ms) {
             Texture2D res = null;
 
-            try
-            {
+            try {
                 res = Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, ms);
             }
-            catch (Exception e)
-            {
-                if (e.Message.Contains("indexed"))
-                {
+            catch (Exception e) {
+                if (e.Message.Contains("indexed")) {
                     Image img = Image.FromStream(ms);
                     Bitmap bmp = new Bitmap(img);
-                    using (MemoryStream ms2 = new MemoryStream())
-                    {
+                    using (MemoryStream ms2 = new MemoryStream()) {
                         bmp.Save(ms2, System.Drawing.Imaging.ImageFormat.Png);
                         res = Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, ms2);
                     }
                 }
-                else if (e.Message.Contains("context"))
-                {
+                else if (e.Message.Contains("context")) {
                     // threading issue, not sure what to do here
                 }
                 else throw e;
@@ -196,8 +180,7 @@ namespace Stellariview
 
             return res;
         }
-        public static Texture2D LoadFromApngFrame(Frame f)
-        {
+        public static Texture2D LoadFromApngFrame(Frame f) {
             Texture2D res = null;
             using (MemoryStream ms = new MemoryStream(f.GetStream().ToArray())) res = LoadFromStream(ms);
             return res;

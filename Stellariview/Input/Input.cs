@@ -8,10 +8,8 @@ using System.Reflection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 
-namespace Stellariview
-{
-    public static class Input
-    {
+namespace Stellariview {
+    public static class Input {
         public static KeyboardState keyStateNow;
         public static KeyboardState keyStateLast;
 
@@ -27,8 +25,7 @@ namespace Stellariview
         public static Point MousePosition { get { return mouseStateNow.Position; } }
         public static int MouseScroll { get { return (mouseStateNow.ScrollWheelValue - mouseStateLast.ScrollWheelValue) / -120; } }
 
-        public static void Init()
-        {
+        public static void Init() {
             // for some stupid reason you need to bash reflection against MonoGame if you want to configure controllers
             /*Type gpt = typeof(GamePad);
 			MethodInfo minfo = gpt.GetMethod("PrepSettings", BindingFlags.NonPublic | BindingFlags.Static);
@@ -38,8 +35,7 @@ namespace Stellariview
 
         }
 
-        public static void Update()
-        {
+        public static void Update() {
             keyStateLast = keyStateNow;
             keyStateNow = Keyboard.GetState();
 
@@ -54,8 +50,7 @@ namespace Stellariview
             "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm" +
             "" // accents at some point
             + " \b";
-        public static void OnTextInput(Object sender, TextInputEventArgs args)
-        {
+        public static void OnTextInput(Object sender, TextInputEventArgs args) {
             //if (args.Character == '\b') return; // no backspace!
             //if (args.Character == '') return; // ctrl+backspace glitch. what
             char chr = args.Character;
@@ -66,8 +61,7 @@ namespace Stellariview
             //Console.WriteLine(keyBuffer);
         }
 
-        public static int OperateText(ref string str, int cursorPos = -1)
-        {
+        public static int OperateText(ref string str, int cursorPos = -1) {
             string buffer = keyBufferComplete;
             bool backspace = buffer.Contains('\b') || buffer.Contains('');
             buffer = buffer.Replace("\b", "");
@@ -88,8 +82,7 @@ namespace Stellariview
             if (KeyPressed(Keys.Right)) cursorPos++;
             if (KeyPressed(Keys.Home)) cursorPos = 0;
             if (KeyPressed(Keys.End)) cursorPos = str.Length;
-            if (backspace && cursorPos > 0)
-            {
+            if (backspace && cursorPos > 0) {
                 string nstr = str;
                 str = nstr.Substring(0, cursorPos - 1);
                 if (KeyHeld(Keys.LeftControl)) str = "";
@@ -97,8 +90,7 @@ namespace Stellariview
                 cursorPos--;
                 if (KeyHeld(Keys.LeftControl)) cursorPos = 0;
             }
-            if (KeyPressed(Keys.Delete) && cursorPos < str.Length)
-            {
+            if (KeyPressed(Keys.Delete) && cursorPos < str.Length) {
                 string nstr = str;
                 str = nstr.Substring(0, cursorPos);
                 if (nstr.Length > cursorPos && !KeyHeld(Keys.LeftControl)) str += nstr.Substring(cursorPos + 1);
@@ -107,8 +99,7 @@ namespace Stellariview
             return cursorPos - opos;
         }
 
-        public static string GetClipboard()
-        {
+        public static string GetClipboard() {
             string clip = "";
 
             string clipRaw = "";
@@ -120,15 +111,13 @@ namespace Stellariview
 			Gtk.Clipboard clipboard = Gtk.Clipboard.Get(Gdk.Atom.Interm("CLIPBOARD", false));
 			if (clipboard != null) clipRaw = clipboard.WaitForText();
 #endif
-            for (int i = 0; i < clipRaw.Length; i++)
-            {
+            for (int i = 0; i < clipRaw.Length; i++) {
                 char c = clipRaw[i];
                 if (AllowedCharacters.Contains(c)) clip += c;
             }
             return clip;
         }
-        public static void SetClipboard(string str)
-        {
+        public static void SetClipboard(string str) {
 #if WINDOWS // .NET
             Thread t = new Thread(() => { System.Windows.Clipboard.SetText(str); });
             t.SetApartmentState(ApartmentState.STA);
@@ -139,18 +128,15 @@ namespace Stellariview
 #endif
         }
 
-        public static bool KeyPressed(Keys key)
-        {
+        public static bool KeyPressed(Keys key) {
             return keyStateNow.IsKeyDown(key) && (keyStateLast == null || keyStateLast.IsKeyUp(key));
         }
 
-        public static bool KeyHeld(Keys key)
-        {
+        public static bool KeyHeld(Keys key) {
             return keyStateNow.IsKeyDown(key);
         }
 
-        public static bool KeyReleased(Keys key)
-        {
+        public static bool KeyReleased(Keys key) {
             return keyStateNow.IsKeyUp(key) && (keyStateLast == null || keyStateLast.IsKeyDown(key));
         }
     }
