@@ -116,7 +116,7 @@ namespace Stellariview {
             }
             else {
                 if (Input.KeyPressed(Keys.Escape)) {
-                    if (graphics.IsFullScreen) ToggleFullscreen();
+                    if (Window.IsBorderless) ToggleFullscreen();
                     else Exit();
                 }
 
