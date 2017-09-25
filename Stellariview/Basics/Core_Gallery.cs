@@ -21,7 +21,7 @@ namespace Stellariview {
     //
 
     public partial class Core : Game {
-        string[] supportedTypes = new[] { ".png", ".jpg", ".gif" };
+        string[] supportedTypes = new[] { ".png", ".jpg", ".jpeg", ".gif" };
 
         public static Path startingPath;
         Path directory;
