@@ -36,10 +36,6 @@ namespace Stellariview {
             }
         }
 
-        //List<ImageContainer> entriesOriginal = new List<ImageContainer>();
-        //List<ImageContainer> entriesCurrent;
-        //int currentEntryId = 0;
-        int lastFrameEntryId = 0;
         ImageContainer CurrentEntry {
             get { return CurrentView.Current; }
             set { CurrentView.Current = value; }
@@ -92,6 +88,10 @@ namespace Stellariview {
 
         bool DoRedraw { get { redraw = true; return true; } } // silly hack because I can :D
         void AppUpdate(GameTime gameTime) {
+            if (Window.ClientBounds.Width <= 0 || Window.ClientBounds.Height <= 0) {
+                Thread.Sleep(250); // if minimized, don't hog cpu
+                return;
+            }
             if (CurrentView.Entries.Count == 0) {
                 Window.Title = "Stellariview - No images present!";
 
@@ -99,11 +99,6 @@ namespace Stellariview {
 
                 return;
             }
-
-            if (lastFrameEntryId != CurrentView.CurrentIndex) {
-                //entriesCurrent[lastFrameEntryId].Unload();
-            }
-            lastFrameEntryId = CurrentView.CurrentIndex;
 
             #region Processing key input
             bool alt = (Input.KeyHeld(Keys.LeftAlt) || Input.KeyHeld(Keys.RightAlt));
@@ -217,6 +212,9 @@ namespace Stellariview {
         }
 
         void AppDraw(GameTime gameTime) {
+            Vector2 screenSize = new Vector2(Window.ClientBounds.Width, Window.ClientBounds.Height);
+            if (screenSize.X <= 0 || screenSize.Y <= 0) return; // minimized
+
             if (switchScrollScale != 0) redraw = true;
             else if (paneScroll != panePosition) redraw = true;
             else if (CurrentView.Entries.Count > 0 && (StateForcesRedraw(CurrentEntry) || StateForcesRedraw(PrevEntry) || StateForcesRedraw(NextEntry)
@@ -248,8 +246,6 @@ namespace Stellariview {
                     if (paneScroll < panePosition) paneScroll = panePosition;
                 }
             }
-
-            Vector2 screenSize = new Vector2(Window.ClientBounds.Width, Window.ClientBounds.Height);
 
             Vector2 paneSize = new Vector2((int)(screenSize.X / 2), screenSize.Y);
             if (paneContents != null) paneSize = new Vector2((int)paneContents.GetSize(paneSize).X, paneSize.Y);
@@ -335,7 +331,6 @@ namespace Stellariview {
             switchScrollPos = curScrollPos - (CurrentEntry.GetSize(screenSize).X * 0.5f + PrevEntry.GetSize(screenSize).X * 0.5f);
             SwitchScroll(screenSize);
 
-            //currentEntryId = WrapIndex(currentEntryId - 1);
             CurrentView.ScrollCurrent(-1);
             dirty = true;
         }
@@ -346,7 +341,6 @@ namespace Stellariview {
             switchScrollPos = curScrollPos + (CurrentEntry.GetSize(screenSize).X * 0.5f + NextEntry.GetSize(screenSize).X * 0.5f);
             SwitchScroll(screenSize);
 
-            //currentEntryId = WrapIndex(currentEntryId + 1);
             CurrentView.ScrollCurrent(1);
             dirty = true;
         }
