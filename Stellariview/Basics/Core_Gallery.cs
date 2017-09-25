@@ -26,25 +26,35 @@ namespace Stellariview {
         public static Path startingPath;
         Path directory;
 
-        List<ImageContainer> entriesOriginal = new List<ImageContainer>();
-        List<ImageContainer> entriesCurrent;
-        int currentEntryId = 0;
+        GallerySet gallery = new GallerySet();
+        GallerySet galleryCollection = new GallerySet();
+        bool viewCollection = false;
+        GallerySet CurrentView {
+            get {
+                if (viewCollection && galleryCollection != null) return galleryCollection;
+                return gallery;
+            }
+        }
+
+        //List<ImageContainer> entriesOriginal = new List<ImageContainer>();
+        //List<ImageContainer> entriesCurrent;
+        //int currentEntryId = 0;
         int lastFrameEntryId = 0;
         ImageContainer CurrentEntry {
-            get { return entriesCurrent[currentEntryId]; }
-            set { currentEntryId = entriesCurrent.IndexOf(value); }
+            get { return CurrentView.Current; }
+            set { CurrentView.Current = value; }
         }
-        ImageContainer NextEntry { get { return entriesCurrent[WrapIndex(currentEntryId + 1)]; } }
-        ImageContainer PrevEntry { get { return entriesCurrent[WrapIndex(currentEntryId - 1)]; } }
-        ImageContainer NextEntry2 { get { return entriesCurrent[WrapIndex(currentEntryId + 2)]; } }
-        ImageContainer PrevEntry2 { get { return entriesCurrent[WrapIndex(currentEntryId - 2)]; } }
+        ImageContainer NextEntry { get { return CurrentView.OffsetCurrent(1); } }
+        ImageContainer PrevEntry { get { return CurrentView.OffsetCurrent(-1); } }
+        ImageContainer NextEntry2 { get { return CurrentView.OffsetCurrent(2); } }
+        ImageContainer PrevEntry2 { get { return CurrentView.OffsetCurrent(-2); } }
 
         RenderTarget2D paneView;
         ImageContainer paneContents;
         int panePosition;
         float paneScroll;
 
-        int fadeLevel = 1;
+        int fadeLevel = 0;
         float[] fadeLevels = { 1f, 0.75f, 0.5f, 0.25f };
 
         float switchScrollPos = 0f;
@@ -62,16 +72,8 @@ namespace Stellariview {
             if (startingPath.IsDirectory) directory = startingPath;
             else directory = startingPath.Up();
 
-            List<String> names = new List<string>();
-            foreach (Path file in directory.Files(p => supportedTypes.Contains(p.Extension), false)) names.Add(file.FileName);
-            NumericComparer nc = new NumericComparer();
-            names.Sort(nc); // make sure proper order
-
-            foreach (string name in names) entriesOriginal.Add(new ImageContainer(directory.Combine(name), false));
-            entriesCurrent = entriesOriginal;
-
-            CurrentEntry = entriesCurrent.Find(p => (p.sourcePath == startingPath));
-            if (currentEntryId < 0) currentEntryId = 0; // no negative numbers >:(
+            foreach (Path file in directory.Files(p => supportedTypes.Contains(p.Extension), false)) gallery.Add(new ImageContainer(file, false), false);
+            gallery.Sort();
 
             // build gradient
             txBG = ImageHelper.MakeGradient(1, GraphicsDevice.Adapter.CurrentDisplayMode.Height, new Color(0.1f, 0.1f, 0.125f), new Color(0.2f, 0.2f, 0.25f));
@@ -90,7 +92,7 @@ namespace Stellariview {
 
         bool DoRedraw { get { redraw = true; return true; } } // silly hack because I can :D
         void AppUpdate(GameTime gameTime) {
-            if (entriesCurrent.Count == 0) {
+            if (CurrentView.Entries.Count == 0) {
                 Window.Title = "Stellariview - No images present!";
 
                 if (Input.KeyPressed(Keys.Escape)) Exit();
@@ -98,10 +100,10 @@ namespace Stellariview {
                 return;
             }
 
-            if (lastFrameEntryId != currentEntryId) {
+            if (lastFrameEntryId != CurrentView.CurrentIndex) {
                 //entriesCurrent[lastFrameEntryId].Unload();
             }
-            lastFrameEntryId = currentEntryId;
+            lastFrameEntryId = CurrentView.CurrentIndex;
 
             #region Processing key input
             bool alt = (Input.KeyHeld(Keys.LeftAlt) || Input.KeyHeld(Keys.RightAlt));
@@ -150,20 +152,38 @@ namespace Stellariview {
                     }
                 }
 
+                if (Input.KeyPressed(Keys.C)) {
+                    // collection; shift+C to switch to/from, plain C to add/remove (depending on if viewing collection)
+                    if (shift) {
+                        if (galleryCollection.Entries.Count == 0) { // add current if empty
+                            galleryCollection.Add(gallery.Current);
+                        }
+                        viewCollection = !viewCollection;
+                    } else {
+                        if (viewCollection) {
+                            galleryCollection.Remove(galleryCollection.Current);
+                            viewCollection = galleryCollection.entriesBase.Count > 0; // switch back to normal view if removing the last entry
+                        } else {
+                            if (!galleryCollection.entriesBase.Contains(gallery.Current)) galleryCollection.Add(gallery.Current);
+                            galleryCollection.Current = gallery.Current;
+                        }
+                    }
+
+                    dirty = DoRedraw;
+                }
+
                 if (Input.KeyPressed(Keys.Left) || Input.KeyPressed(Keys.Z)) {
-                    if (!shift || entriesCurrent == entriesOriginal) GoPrev();
+                    if (!shift || !CurrentView.IsShuffled) GoPrev();
                     else {
-                        int fid = entriesOriginal.IndexOf(entriesCurrent[currentEntryId]);
-                        currentEntryId = entriesCurrent.IndexOf(entriesOriginal[WrapIndex(fid - 1)]);
+                        CurrentView.ScrollCurrent(-1, true);
 
                         dirty = DoRedraw;
                     }
                 }
                 if (Input.KeyPressed(Keys.Right) || Input.KeyPressed(Keys.X)) {
-                    if (!shift || entriesCurrent == entriesOriginal) GoNext();
+                    if (!shift || !CurrentView.IsShuffled) GoNext();
                     else {
-                        int fid = entriesOriginal.IndexOf(entriesCurrent[currentEntryId]);
-                        currentEntryId = entriesCurrent.IndexOf(entriesOriginal[WrapIndex(fid + 1)]);
+                        CurrentView.ScrollCurrent(1, true);
 
                         dirty = DoRedraw;
                     }
@@ -173,16 +193,19 @@ namespace Stellariview {
 
             if (dirty) {
                 ImageContainer.pauseLoad = true;
-                entriesCurrent[WrapIndex(currentEntryId - 2)].Load();
-                entriesCurrent[WrapIndex(currentEntryId + 2)].Load();
-                entriesCurrent[WrapIndex(currentEntryId - 1)].Load();
-                entriesCurrent[WrapIndex(currentEntryId + 1)].Load();
+
+                PrevEntry2.Load();
+                NextEntry2.Load();
+                PrevEntry.Load();
+                NextEntry.Load();
+
                 if (paneContents != null && paneScroll != 0f) paneContents.Load();
                 CurrentEntry.Load();
                 ImageContainer.pauseLoad = false;
 
                 string title = "Stellariview - " + CurrentEntry.sourcePath.FileName;
-                if (entriesCurrent != entriesOriginal) title += " (shuffle)";
+                if (viewCollection) title += " (collection view)";
+                if (CurrentView.IsShuffled) title += " (shuffle)";
                 Window.Title = title;
 
                 dirty = false;
@@ -196,13 +219,13 @@ namespace Stellariview {
         void AppDraw(GameTime gameTime) {
             if (switchScrollScale != 0) redraw = true;
             else if (paneScroll != panePosition) redraw = true;
-            else if (entriesCurrent.Count > 0 && (StateForcesRedraw(CurrentEntry) || StateForcesRedraw(PrevEntry) || StateForcesRedraw(NextEntry)
+            else if (CurrentView.Entries.Count > 0 && (StateForcesRedraw(CurrentEntry) || StateForcesRedraw(PrevEntry) || StateForcesRedraw(NextEntry)
                 || StateForcesRedraw(PrevEntry2) || StateForcesRedraw(NextEntry2))) redraw = true;
             if (!redraw) return;
             redraw = false;
 
 
-            if (entriesCurrent.Count == 0) {
+            if (CurrentView.Entries.Count == 0) {
                 spriteBatch.GraphicsDevice.Clear(new Color(0.25f, 0f, 0f));
                 return;
             }
@@ -312,7 +335,8 @@ namespace Stellariview {
             switchScrollPos = curScrollPos - (CurrentEntry.GetSize(screenSize).X * 0.5f + PrevEntry.GetSize(screenSize).X * 0.5f);
             SwitchScroll(screenSize);
 
-            currentEntryId = WrapIndex(currentEntryId - 1);
+            //currentEntryId = WrapIndex(currentEntryId - 1);
+            CurrentView.ScrollCurrent(-1);
             dirty = true;
         }
         void GoNext() {
@@ -322,7 +346,8 @@ namespace Stellariview {
             switchScrollPos = curScrollPos + (CurrentEntry.GetSize(screenSize).X * 0.5f + NextEntry.GetSize(screenSize).X * 0.5f);
             SwitchScroll(screenSize);
 
-            currentEntryId = WrapIndex(currentEntryId + 1);
+            //currentEntryId = WrapIndex(currentEntryId + 1);
+            CurrentView.ScrollCurrent(1);
             dirty = true;
         }
         void SwitchScroll(Vector2 screenSize) {
@@ -337,34 +362,10 @@ namespace Stellariview {
             }
         }
 
-        void WrapIndex() { currentEntryId = WrapIndex(currentEntryId); }
-        int WrapIndex(int index) {
-            while (index < 0) index += entriesCurrent.Count;
-            while (index >= entriesCurrent.Count) index -= entriesCurrent.Count;
-            return index;
-        }
-
         void Shuffle() {
-            ImageContainer current = CurrentEntry;
-
-            if (entriesCurrent != entriesOriginal) entriesCurrent = entriesOriginal;
-            else {
-                Random rand = new Random();
-
-                entriesCurrent = new List<ImageContainer>();
-                foreach (ImageContainer entry in entriesOriginal) {
-                    entriesCurrent.Insert(rand.Next(entriesCurrent.Count), entry);
-                }
-            }
-
-            CurrentEntry = current;
+            CurrentView.Shuffle();
 
             dirty = true;
         }
-
-        /*TextureHolder LoadImage(string name)
-		{
-			return new TextureHolder(directory.Combine(name));
-		}*/
     }
 }

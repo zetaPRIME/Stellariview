@@ -118,6 +118,7 @@
     <Compile Include="Stellariview\Basics\Program.cs" />
     <Compile Include="Stellariview\Data Types\AnimatedTexture.cs" />
     <Compile Include="Stellariview\Data Types\AnimPreparer.cs" />
+    <Compile Include="Stellariview\Data Types\GallerySet.cs" />
     <Compile Include="Stellariview\Data Types\ImageContainer.cs" />
     <Compile Include="Stellariview\Utility\ImageHelper.cs" />
     <Compile Include="Stellariview\Utility\NumericComparer.cs" />
