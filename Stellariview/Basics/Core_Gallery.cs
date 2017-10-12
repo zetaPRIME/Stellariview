@@ -70,6 +70,10 @@ namespace Stellariview {
 
             foreach (Path file in directory.Files(p => supportedTypes.Contains(p.Extension), false)) gallery.Add(new ImageContainer(file, false), false);
             gallery.Sort();
+            if (!startingPath.IsDirectory) {
+                // start at opened file
+                gallery.Current = gallery.Entries.Find(p => (p.sourcePath == startingPath));
+            }
 
             // build gradient
             txBG = ImageHelper.MakeGradient(1, GraphicsDevice.Adapter.CurrentDisplayMode.Height, new Color(0.1f, 0.1f, 0.125f), new Color(0.2f, 0.2f, 0.25f));
