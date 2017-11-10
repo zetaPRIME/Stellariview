@@ -68,7 +68,7 @@ namespace Stellariview {
             if (startingPath.IsDirectory) directory = startingPath;
             else directory = startingPath.Up();
 
-            foreach (Path file in directory.Files(p => supportedTypes.Contains(p.Extension), false)) gallery.Add(new ImageContainer(file, false), false);
+            foreach (Path file in directory.Files(p => supportedTypes.Contains(p.Extension.ToLower()), false)) gallery.Add(new ImageContainer(file, false), false);
             gallery.Sort();
             if (!startingPath.IsDirectory) {
                 // start at opened file
