@@ -164,7 +164,7 @@ namespace Stellariview {
                 res = Texture2D.FromStream(Core.spriteBatch.GraphicsDevice, ms);
             }
             catch (Exception e) {
-                if (e.Message.Contains("indexed")) {
+                if (e.Message.Contains("indexed") || e.Message.Contains("format")) { // any format errors require conversion in memory
                     Image img = Image.FromStream(ms);
                     Bitmap bmp = new Bitmap(img);
                     using (MemoryStream ms2 = new MemoryStream()) {
